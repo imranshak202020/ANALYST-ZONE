@@ -17,6 +17,11 @@
               allow write: if request.auth != null &&
                 request.auth.token.email == "YOUR_ADMIN_EMAIL_HERE";
             }
+            match /trades/{tradeId} {
+              allow read: if true;
+              allow write: if request.auth != null &&
+                request.auth.token.email == "YOUR_ADMIN_EMAIL_HERE";
+            }
           }
         }
 
@@ -41,8 +46,13 @@
    - "Save Changes" pushes your edits to Firestore. From then on,
      EVERY visitor (including logged-out ones) will see your edited
      version — the page fetches the saved version automatically.
-   - Only index.html currently has an editable region. The trading
-     journal page is data-driven and is not part of this edit system.
+   - Only index.html has this editable text region ("Save Changes"
+     button does nothing on the trading journal page).
+   - The trading journal page has its own, separate sync: every
+     Add/Edit/Delete of a trade is written straight to the "trades"
+     collection in Firestore, and every visitor's page listens live
+     to that collection — so admin's changes show up for everyone
+     automatically, without needing a "Save Changes" click.
    ============================================================ */
 
 const firebaseConfig = {

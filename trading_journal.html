@@ -393,6 +393,46 @@ function rebuildFilterOptions(){
   fWeek.value = weeks.includes(curW) ? curW : 'all';
 }
 
+// ---------- Firestore sync (so every visitor sees the same data) ----------
+// db/auth come from admin.js. This listens live to the "trades" collection,
+// so any Add/Edit/Delete by the admin shows up for everyone automatically.
+function subscribeTrades(){
+  if(!db) return;
+  db.collection('trades').onSnapshot(function(snapshot){
+    if(snapshot.empty){
+      // Nothing in Firestore yet. If we're logged in as admin, push the
+      // current (demo) trades up once so the collection isn't empty —
+      // this only succeeds for the admin because of the Firestore rules.
+      if(isAdminUser && trades.length){
+        const batch = db.batch();
+        trades.forEach(function(t){
+          const ref = db.collection('trades').doc(String(t.id));
+          batch.set(ref, {
+            date:t.date, tf:t.tf, pair:t.pair, dir:t.dir, result:t.result,
+            count:t.count, rr:t.rr, before:t.before||'', after:t.after||'', note:t.note||''
+          });
+        });
+        batch.commit().catch(function(){ /* not admin yet or rules missing — ignore */ });
+      }
+      renderAll();
+      return;
+    }
+    const loaded = [];
+    let maxId = 0;
+    snapshot.forEach(function(doc){
+      const id = Number(doc.id) || 0;
+      loaded.push(Object.assign({id:id}, doc.data()));
+      if(id > maxId) maxId = id;
+    });
+    trades = loaded;
+    nextId = maxId + 1;
+    page = 1;
+    renderAll();
+  }, function(err){
+    console.error('Failed to sync trades with Firestore:', err);
+  });
+}
+
 // ---------- Chart instances ----------
 let chMonthlyDist, chWeekly, chBreakdown, chEquity;
 const chartColors = {gold:'#c9a84c', green:'#4ecb71', red:'#e05252', muted:'#8b93a1', line:'#242a35'};
@@ -570,13 +610,16 @@ function closeModal(){ modalBg.classList.remove('open'); }
 function deleteTrade(id){
   if(!isAdminUser) return;
   if(!confirm('Delete this trade?')) return;
-  trades = trades.filter(t=>t.id!==id);
-  renderAll();
+  if(!db){ alert('Still connecting to the database — please wait a second and try again.'); return; }
+  db.collection('trades').doc(String(id)).delete()
+    .catch(function(err){ alert('Delete failed: '+err.message); });
 }
 function saveTrade(){
+  if(!isAdminUser){ alert('Only admin can add or edit trades.'); return; }
   const date = document.getElementById('fDate').value;
   const pair = document.getElementById('fPair').value.trim();
   if(!date || !pair){ alert('Date and Pair are required.'); return; }
+  if(!db){ alert('Still connecting to the database — please wait a second and try again.'); return; }
   const payload = {
     date, tf:document.getElementById('fTF').value, pair,
     dir:document.getElementById('fDir').value, result:document.getElementById('fResult').value,
@@ -586,14 +629,16 @@ function saveTrade(){
     after:document.getElementById('fAfter').value.trim(),
     note:document.getElementById('fNote').value.trim(),
   };
-  if(editingId){
-    const idx = trades.findIndex(t=>t.id===editingId);
-    trades[idx] = {...trades[idx], ...payload};
-  } else {
-    trades.push({id:nextId++, ...payload});
-  }
-  closeModal();
-  renderAll();
+  const id = editingId || nextId;
+  const saveBtn = document.getElementById('btnSave');
+  saveBtn.disabled = true;
+  db.collection('trades').doc(String(id)).set(payload)
+    .then(function(){
+      if(!editingId) nextId = id + 1;
+      closeModal();
+    })
+    .catch(function(err){ alert('Save failed: '+err.message); })
+    .finally(function(){ saveBtn.disabled = false; });
 }
 
 // ---------- Export / Import ----------
@@ -606,15 +651,27 @@ function exportJSON(){
   URL.revokeObjectURL(url);
 }
 function importJSON(file){
+  if(!isAdminUser){ alert('Only admin can import.'); return; }
   const reader = new FileReader();
   reader.onload = e=>{
     try{
       const data = JSON.parse(e.target.result);
       if(!Array.isArray(data)) throw new Error('invalid');
-      trades = data;
-      nextId = Math.max(0,...trades.map(t=>t.id||0))+1;
-      page = 1;
-      renderAll();
+      if(!db){ alert('Still connecting to the database — please wait a second and try again.'); return; }
+      let runningId = Math.max(0, ...data.map(t=>Number(t.id)||0)) ;
+      const batch = db.batch();
+      data.forEach(t=>{
+        const id = Number(t.id) || ++runningId;
+        const ref = db.collection('trades').doc(String(id));
+        batch.set(ref, {
+          date:t.date||'', tf:t.tf||'1H', pair:t.pair||'', dir:t.dir||'long',
+          result:t.result||'tp', count:Number(t.count)||1, rr:Number(t.rr)||0,
+          before:t.before||'', after:t.after||'', note:t.note||''
+        });
+      });
+      batch.commit()
+        .then(()=>{ page = 1; })
+        .catch(err=>{ alert('Import failed: '+err.message); });
     }catch(err){ alert('This file is not in a valid format.'); }
   };
   reader.readAsText(file);
@@ -671,6 +728,7 @@ renderAll();
       if (b) b.style.display = 'none'; // hidden until we confirm admin status
     });
 
+    var tradesSubscribed = false;
     var tries = 0;
     var iv = setInterval(function () {
       tries++;
@@ -682,6 +740,10 @@ renderAll();
             if (b) b.style.display = isAdmin ? '' : 'none';
           });
           isAdminUser = isAdmin;
+          if (!tradesSubscribed && typeof db !== 'undefined' && db) {
+            tradesSubscribed = true;
+            subscribeTrades();
+          }
           if (typeof renderAll === 'function') renderAll();
         });
       } else if (tries > 150) {
