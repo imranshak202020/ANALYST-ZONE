@@ -39,7 +39,7 @@
    - A small 🔒 icon appears bottom-right on every page for anyone.
    - Clicking it opens a login box. Only your admin email/password
      will succeed (everyone else gets an error).
-   - Once logged in as admin, a bar appears at the bottom of the
+   - Once logged in as admin, a sidebar appears on the right side of the
      page with "Enable Edit Mode" and "Save Changes" buttons.
    - Edit Mode makes the main page content directly editable (click
      into text and type, like a Word doc).
@@ -111,9 +111,12 @@ function injectUI() {
   style.textContent = `
     #az-lock{position:fixed;bottom:18px;right:18px;z-index:9999;background:#12151c;border:1px solid #242a35;color:#8b93a1;width:42px;height:42px;border-radius:50%;align-items:center;justify-content:center;cursor:pointer;font-size:17px;box-shadow:0 4px 14px rgba(0,0,0,.4);display:flex;}
     #az-lock:hover{color:#c9a84c;border-color:#c9a84c;}
-    #az-admin-bar{position:fixed;bottom:0;left:0;right:0;z-index:9999;background:#12151c;border-top:1px solid #242a35;padding:10px 18px;display:none;align-items:center;gap:12px;font-family:sans-serif;font-size:13px;color:#e9e7de;flex-wrap:wrap;}
-    #az-admin-bar button{background:#c9a84c;color:#0d0f14;border:none;padding:8px 14px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;}
+    #az-admin-bar{position:fixed;top:0;right:0;bottom:0;width:220px;z-index:9999;background:#12151c;border-left:1px solid #242a35;padding:20px 16px;display:none;flex-direction:column;gap:10px;font-family:sans-serif;font-size:13px;color:#e9e7de;box-shadow:-4px 0 14px rgba(0,0,0,.4);}
+    #az-admin-bar strong{color:#c9a84c;font-size:13px;margin-bottom:6px;}
+    #az-admin-bar button{background:#c9a84c;color:#0d0f14;border:none;padding:9px 14px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;width:100%;}
     #az-admin-bar button.secondary{background:transparent;border:1px solid #242a35;color:#e9e7de;}
+    #az-admin-bar #az-signout{margin-top:auto;}
+    #az-admin-bar #az-status{color:#8b93a1;font-size:12px;}
     #az-login-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:none;align-items:center;justify-content:center;}
     #az-login-modal .box{background:#12151c;border:1px solid #242a35;border-radius:10px;padding:24px;width:280px;font-family:sans-serif;position:relative;}
     #az-login-modal input{width:100%;padding:8px;margin-bottom:10px;border-radius:6px;border:1px solid #242a35;background:#0d0f14;color:#e9e7de;box-sizing:border-box;}
@@ -154,11 +157,11 @@ function injectUI() {
   const bar = document.createElement('div');
   bar.id = 'az-admin-bar';
   bar.innerHTML = `
-    <strong style="color:#c9a84c;">Admin</strong>
+    <strong>Admin</strong>
     <button id="az-toggle-edit">Enable Edit Mode</button>
     <button id="az-save" class="secondary">Save Changes</button>
-    <span id="az-status" style="color:#8b93a1;"></span>
-    <button id="az-signout" class="secondary" style="margin-left:auto;">Sign Out</button>
+    <span id="az-status"></span>
+    <button id="az-signout" class="secondary">Sign Out</button>
   `;
   document.body.appendChild(bar);
   document.getElementById('az-signout').onclick = () => auth.signOut();
