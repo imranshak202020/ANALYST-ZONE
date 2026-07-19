@@ -119,7 +119,9 @@
 
   /* charts */
   .charts{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:22px;}
+  .charts.top3{grid-template-columns:1fr 1fr 1fr;}
   .charts .full{grid-column:1/-1;}
+  @media(max-width:900px){ .charts.top3{grid-template-columns:1fr;} }
   .panel{background:rgba(18,16,28,.55);border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:18px;backdrop-filter:blur(6px);}
   .panel h3{margin:0 0 3px;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:#7fd6e0;font-family:var(--mono);}
   .panel .desc{font-size:11.5px;color:#8a87a0;margin:0 0 12px;font-family:var(--bn);}
@@ -197,8 +199,8 @@
   <section class="journal-hero">
     <div>
       <p class="eyebrow">Trading Journal</p>
-      <h1>Private Discussion Group<br>Journal</h1>
-      <p class="desc">All analysis shared is for learning purposes and not financial advice or Buy/Sell recommendations. Objective is solely to conduct educational market analysis, discussions, and weekly live learning sessions.</p>
+      <h1>Analyst Zone Journal</h1>
+      <p class="desc">Don&rsquo;t call me trader. I am a CHART ANALYST.<br>No trade signals are provided. No trading or investment advice is given.<br>All content is for educational purposes only. You are responsible for your own decisions.</p>
       <p class="join-line">If you also want to learn my POV of charts <a href="https://t.me/+_nIjR7Tw08NlODdl" target="_blank" rel="noopener">Join Here</a></p>
     </div>
     <div class="abbrev-card">
@@ -256,17 +258,25 @@
     </div>
   </section>
 
-  <section class="charts">
+  <section class="charts top3">
     <div class="panel">
       <h3>Monthly RR Distribution</h3>
-      <p class="desc">RR contribution per month</p>
+      <p class="desc">RR contribution</p>
       <div class="chartbox"><canvas id="chartMonthlyDist"></canvas></div>
     </div>
     <div class="panel">
+      <h3>Monthly Net RR</h3>
+      <p class="desc" id="monthlyNetSub">Calculated month by month</p>
+      <div class="chartbox"><canvas id="chartMonthlyNet"></canvas></div>
+    </div>
+    <div class="panel">
       <h3>Weekly Net RR</h3>
-      <p class="desc">Calculated week by week</p>
+      <p class="desc" id="weeklyNetSub">Calculated week by week</p>
       <div class="chartbox"><canvas id="chartWeekly"></canvas></div>
     </div>
+  </section>
+
+  <section class="charts">
     <div class="panel">
       <h3>Monthly Breakdown</h3>
       <p class="desc">Wins / Losses / BE — by month</p>
@@ -474,7 +484,7 @@ function subscribeTrades(){
 }
 
 // ---------- Chart instances ----------
-let chMonthlyDist, chWeekly, chBreakdown, chEquity;
+let chMonthlyDist, chMonthlyNet, chWeekly, chBreakdown, chEquity;
 const chartColors = {gold:'#c9a84c', green:'#4ecb71', red:'#e05252', muted:'#8b93a1', line:'#242a35'};
 Chart.defaults.font.family = "'DM Mono', monospace";
 Chart.defaults.color = chartColors.muted;
@@ -504,12 +514,48 @@ function renderCharts(data){
 
   const barColor = (arr)=>arr.map(v=>v>=0?chartColors.green:chartColors.red);
 
+  const posRR = monthlyRR.filter(v=>v>0).reduce((s,v)=>s+v,0);
+  const negRR = Math.abs(monthlyRR.filter(v=>v<0).reduce((s,v)=>s+v,0));
+  const distTotal = posRR+negRR;
+  const posPct = distTotal>0 ? Math.round(posRR/distTotal*100) : 0;
+  const negPct = distTotal>0 ? 100-posPct : 0;
+
   if(chMonthlyDist) chMonthlyDist.destroy();
   chMonthlyDist = new Chart(document.getElementById('chartMonthlyDist'), {
+    type:'doughnut',
+    data:{labels:['Winning RR','Losing RR'], datasets:[{data:[posPct,negPct], backgroundColor:['#2fc9d6','#7fd6e0'], borderColor:'transparent', hoverOffset:4}]},
+    options:{
+      responsive:true, maintainAspectRatio:false, cutout:'62%',
+      plugins:{
+        legend:{display:false},
+        tooltip:{callbacks:{label:function(ctx){ return ctx.label+': '+ctx.parsed+'%'; }}},
+        datalabels:false
+      }
+    },
+    plugins:[{
+      id:'centerText',
+      afterDraw(chart){
+        const {ctx, chartArea:{left, right, top, bottom}} = chart;
+        const cx = (left+right)/2, cy = (top+bottom)/2;
+        ctx.save();
+        ctx.font = "600 11px 'DM Mono', monospace";
+        ctx.fillStyle = chartColors.muted;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('NET RR', cx, cy);
+        ctx.restore();
+      }
+    }]
+  });
+
+  if(chMonthlyNet) chMonthlyNet.destroy();
+  chMonthlyNet = new Chart(document.getElementById('chartMonthlyNet'), {
     type:'bar',
     data:{labels:months.map(monthLabel), datasets:[{data:monthlyRR, backgroundColor:barColor(monthlyRR), borderRadius:4, maxBarThickness:28}]},
     options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:baseGridOpts()}
   });
+  const monthlyNetSub = document.getElementById('monthlyNetSub');
+  if(monthlyNetSub) monthlyNetSub.textContent = months.length + (months.length===1 ? ' month' : ' months');
 
   if(chWeekly) chWeekly.destroy();
   chWeekly = new Chart(document.getElementById('chartWeekly'), {
@@ -517,6 +563,8 @@ function renderCharts(data){
     data:{labels:weeks, datasets:[{data:weeklyRR, backgroundColor:barColor(weeklyRR), borderRadius:4, maxBarThickness:20}]},
     options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:baseGridOpts()}
   });
+  const weeklyNetSub = document.getElementById('weeklyNetSub');
+  if(weeklyNetSub) weeklyNetSub.textContent = weeks.length + (weeks.length===1 ? ' week' : ' weeks');
 
   if(chBreakdown) chBreakdown.destroy();
   chBreakdown = new Chart(document.getElementById('chartBreakdown'), {
