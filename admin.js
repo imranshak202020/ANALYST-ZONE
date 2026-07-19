@@ -46,15 +46,15 @@
    ============================================================ */
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDpVmh2-6YpQUWVGjiXfhT9mmua_s_gwx8",
+  authDomain: "my-website-f5012.firebaseapp.com",
+  projectId: "my-website-f5012",
+  storageBucket: "my-website-f5012.firebasestorage.app",
+  messagingSenderId: "945567270401",
+  appId: "1:945567270401:web:ca626d7d90bd6dcbd92200"
 };
 
-const ADMIN_EMAIL = "you@example.com"; // <-- change to your admin login email
+const ADMIN_EMAIL = "imranshak202020@gmail.com"; // <-- change to your admin login email
 
 const PAGE_KEY = document.body.getAttribute('data-page') || 'index';
 
