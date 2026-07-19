@@ -128,6 +128,20 @@
   .panel .chartbox{position:relative;height:220px;}
   .panel .chartbox.tall{height:260px;}
 
+  /* monthly breakdown cards */
+  .mb-panel{margin-bottom:22px;}
+  .mb-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .mb-head h3{margin:0;font-size:11px;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;color:#7fd6e0;font-family:var(--mono);}
+  .mb-head .live{font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-family:var(--mono);}
+  .mb-scroll{display:grid;grid-template-columns:repeat(auto-fit, minmax(0, 1fr));gap:16px;}
+  .mb-card{background:linear-gradient(160deg, rgba(47,201,214,.08), rgba(18,16,28,.6));border:1px solid rgba(255,255,255,.08);border-radius:12px;padding:18px;}
+  .mb-card h4{margin:0 0 10px;font-family:var(--serif);font-weight:600;font-size:22px;color:#f5f2ea;letter-spacing:.5px;padding-bottom:10px;border-bottom:1px solid rgba(255,255,255,.1);}
+  .mb-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .mb-box{background:rgba(10,14,20,.5);border:1px solid rgba(255,255,255,.06);border-radius:8px;padding:10px 12px;}
+  .mb-box .lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#8b93a1;margin-bottom:4px;}
+  .mb-box .val{font-family:var(--serif);font-size:19px;font-weight:600;color:#f5f2ea;}
+  @media(max-width:700px){ .mb-scroll{grid-template-columns:1fr;} }
+
   /* journal table */
   .journal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:10px;}
   .journal-head h3{margin:0;font-size:14px;font-weight:600;}
@@ -140,6 +154,8 @@
   .tag.tp{background:rgba(78,203,113,.12);color:var(--green);border:1px solid rgba(78,203,113,.3);}
   .tag.sl{background:rgba(224,82,82,.12);color:var(--red);border:1px solid rgba(224,82,82,.3);}
   .tag.be{background:rgba(201,168,76,.12);color:var(--gold);border:1px solid rgba(201,168,76,.3);}
+  .tag.nc{background:rgba(139,147,161,.12);color:var(--muted);border:1px solid rgba(139,147,161,.3);}
+  .tag.tsl{background:rgba(127,214,224,.12);color:#7fd6e0;border:1px solid rgba(127,214,224,.3);}
   .dir.long{color:var(--green);}
   .dir.short{color:var(--red);}
   .rr.pos{color:var(--green);}
@@ -201,7 +217,7 @@
       <p class="eyebrow">Trading Journal</p>
       <h1>Analyst Zone Journal</h1>
       <p class="desc">Don&rsquo;t call me trader. I am a CHART ANALYST.<br>No trade signals are provided. No trading or investment advice is given.<br>All content is for educational purposes only. You are responsible for your own decisions.</p>
-      <p class="join-line">If you also want to learn my POV of charts <a href="https://t.me/+_nIjR7Tw08NlODdl" target="_blank" rel="noopener">Join Here</a></p>
+      <p class="join-line">If you also want to learn my POV of charts <a href="https://www.facebook.com/analystzone0" target="_blank" rel="noopener">Facebook</a> &nbsp;|&nbsp; <a href="https://x.com/ANALYSTZONEE" target="_blank" rel="noopener">X</a></p>
     </div>
     <div class="abbrev-card">
       <h4>Trading Abbreviations</h4>
@@ -258,12 +274,7 @@
     </div>
   </section>
 
-  <section class="charts top3">
-    <div class="panel">
-      <h3>Monthly RR Distribution</h3>
-      <p class="desc">RR contribution</p>
-      <div class="chartbox"><canvas id="chartMonthlyDist"></canvas></div>
-    </div>
+  <section class="charts">
     <div class="panel">
       <h3>Monthly Net RR</h3>
       <p class="desc" id="monthlyNetSub">Calculated month by month</p>
@@ -274,6 +285,14 @@
       <p class="desc" id="weeklyNetSub">Calculated week by week</p>
       <div class="chartbox"><canvas id="chartWeekly"></canvas></div>
     </div>
+  </section>
+
+  <section class="panel mb-panel">
+    <div class="mb-head">
+      <h3>Monthly Breakdown</h3>
+      <span class="live">Calculated live</span>
+    </div>
+    <div class="mb-scroll" id="mbCards"></div>
   </section>
 
   <section class="charts">
@@ -310,9 +329,6 @@
       <button class="btn small" id="nextPage">Next</button>
     </div>
   </section>
-
-  <p class="footer.note" style="margin-top:26px;font-size:11px;color:var(--muted);font-family:var(--mono);text-align:center;line-height:1.7;">Everything is calculated live in your browser — nothing is saved to a server.<br>
-  When you're done, click <b style="color:var(--gold)">Export</b> to download a JSON file, and <b style="color:var(--gold)">Import</b> it next time to continue.</p>
 
 </div>
 
@@ -366,7 +382,7 @@
         <select id="fDir"><option value="long">Long (Buy)</option><option value="short">Short (Sell)</option></select>
       </div>
       <div><label>Result</label>
-        <select id="fResult"><option value="tp">TP</option><option value="sl">SL</option><option value="be">BE</option></select>
+        <select id="fResult"><option value="tp">TP</option><option value="sl">SL</option><option value="be">BE</option><option value="nc">NC</option><option value="tsl">TSL</option></select>
       </div>
       <div><label>No. of Trades</label><input type="number" id="fCount" value="1" min="1"></div>
       <div><label>RR</label><input type="number" step="0.01" id="fRR" placeholder="e.g. 2.5 or -1"></div>
@@ -415,6 +431,11 @@ function monthLabel(key){
   const [y,m]=key.split('-');
   const names=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   return names[parseInt(m,10)-1]+" '"+y.slice(2);
+}
+function fullMonthName(key){
+  const [,m]=key.split('-');
+  const names=['January','February','March','April','May','June','July','August','September','October','November','December'];
+  return names[parseInt(m,10)-1];
 }
 
 function filteredTrades(){
@@ -484,7 +505,7 @@ function subscribeTrades(){
 }
 
 // ---------- Chart instances ----------
-let chMonthlyDist, chMonthlyNet, chWeekly, chBreakdown, chEquity;
+let chMonthlyNet, chWeekly, chBreakdown, chEquity;
 const chartColors = {gold:'#c9a84c', green:'#4ecb71', red:'#e05252', muted:'#8b93a1', line:'#242a35'};
 Chart.defaults.font.family = "'DM Mono', monospace";
 Chart.defaults.color = chartColors.muted;
@@ -493,7 +514,7 @@ Chart.defaults.font.size = 11;
 function baseGridOpts(){
   return {
     x:{grid:{color:chartColors.line}, ticks:{color:chartColors.muted}},
-    y:{grid:{color:chartColors.line}, ticks:{color:chartColors.muted}}
+    y:{grid:{color:chartColors.line}, ticks:{color:chartColors.muted}, beginAtZero:true, grace:'10%'}
   };
 }
 
@@ -513,40 +534,6 @@ function renderCharts(data){
   document.getElementById('curEquity').textContent = cum.toFixed(2)+'R';
 
   const barColor = (arr)=>arr.map(v=>v>=0?chartColors.green:chartColors.red);
-
-  const posRR = monthlyRR.filter(v=>v>0).reduce((s,v)=>s+v,0);
-  const negRR = Math.abs(monthlyRR.filter(v=>v<0).reduce((s,v)=>s+v,0));
-  const distTotal = posRR+negRR;
-  const posPct = distTotal>0 ? Math.round(posRR/distTotal*100) : 0;
-  const negPct = distTotal>0 ? 100-posPct : 0;
-
-  if(chMonthlyDist) chMonthlyDist.destroy();
-  chMonthlyDist = new Chart(document.getElementById('chartMonthlyDist'), {
-    type:'doughnut',
-    data:{labels:['Winning RR','Losing RR'], datasets:[{data:[posPct,negPct], backgroundColor:['#2fc9d6','#7fd6e0'], borderColor:'transparent', hoverOffset:4}]},
-    options:{
-      responsive:true, maintainAspectRatio:false, cutout:'62%',
-      plugins:{
-        legend:{display:false},
-        tooltip:{callbacks:{label:function(ctx){ return ctx.label+': '+ctx.parsed+'%'; }}},
-        datalabels:false
-      }
-    },
-    plugins:[{
-      id:'centerText',
-      afterDraw(chart){
-        const {ctx, chartArea:{left, right, top, bottom}} = chart;
-        const cx = (left+right)/2, cy = (top+bottom)/2;
-        ctx.save();
-        ctx.font = "600 11px 'DM Mono', monospace";
-        ctx.fillStyle = chartColors.muted;
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText('NET RR', cx, cy);
-        ctx.restore();
-      }
-    }]
-  });
 
   if(chMonthlyNet) chMonthlyNet.destroy();
   chMonthlyNet = new Chart(document.getElementById('chartMonthlyNet'), {
@@ -585,6 +572,40 @@ function renderCharts(data){
   });
 }
 
+// ---------- Monthly breakdown cards ----------
+function renderMonthlyBreakdownCards(data){
+  const wrap = document.getElementById('mbCards');
+  if(!wrap) return;
+
+  const valid = data.filter(t=>t.date);
+  const months = [...new Set(valid.map(t=>monthKey(t.date)))].sort();
+
+  const cardFor = (label, rows)=>{
+    const total = rows.reduce((s,t)=>s+Number(t.count),0);
+    const wins = rows.filter(t=>t.result==='tp').reduce((s,t)=>s+Number(t.count),0);
+    const losses = rows.filter(t=>t.result==='sl').reduce((s,t)=>s+Number(t.count),0);
+    const bes = rows.filter(t=>t.result==='be').reduce((s,t)=>s+Number(t.count),0);
+    const winRate = (wins+losses+bes)>0 ? (wins/(wins+losses+bes)*100) : 0;
+    const netRR = rows.reduce((s,t)=>s+Number(t.rr),0);
+    return `
+      <div class="mb-card">
+        <h4>${label}</h4>
+        <div class="mb-grid">
+          <div class="mb-box"><div class="lbl">Trades</div><div class="val">${total}</div></div>
+          <div class="mb-box"><div class="lbl">Wins</div><div class="val">${wins}</div></div>
+          <div class="mb-box"><div class="lbl">Losses</div><div class="val">${losses}</div></div>
+          <div class="mb-box"><div class="lbl">Breakeven</div><div class="val">${bes}</div></div>
+          <div class="mb-box"><div class="lbl">Win Rate</div><div class="val">${winRate.toFixed(2)}%</div></div>
+          <div class="mb-box"><div class="lbl">Net RR</div><div class="val">${(netRR>=0?'':'')+netRR.toFixed(2)}R</div></div>
+        </div>
+      </div>`;
+  };
+
+  let html = months.map(m => cardFor(fullMonthName(m), valid.filter(t=>monthKey(t.date)===m))).join('');
+
+  wrap.innerHTML = html || '<p class="desc" style="margin:0;">No trades yet.</p>';
+}
+
 // ---------- Stats ----------
 function renderStats(data){
   const total = data.reduce((s,t)=>s+Number(t.count),0);
@@ -621,7 +642,8 @@ function renderTable(data){
   }
 
   body.innerHTML = pageData.map(t=>{
-    const resTag = t.result==='tp' ? '<span class="tag tp">TP</span>' : t.result==='sl' ? '<span class="tag sl">SL</span>' : '<span class="tag be">BE</span>';
+    const resTagMap = {tp:'<span class="tag tp">TP</span>', sl:'<span class="tag sl">SL</span>', be:'<span class="tag be">BE</span>', nc:'<span class="tag nc">NC</span>', tsl:'<span class="tag tsl">TSL</span>'};
+    const resTag = resTagMap[t.result] || resTagMap.be;
     const dirLabel = t.dir==='long' ? '<span class="dir long">Long</span>' : '<span class="dir short">Short</span>';
     const rrClass = Number(t.rr)>=0 ? 'rr pos' : 'rr neg';
     const rrText = (Number(t.rr)>=0?'+':'')+Number(t.rr).toFixed(2)+'R';
@@ -653,6 +675,7 @@ function renderAll(){
   const data = filteredTrades();
   renderStats(data);
   renderCharts(data);
+  renderMonthlyBreakdownCards(data);
   renderTable(data);
   const mText = filterMonth==='all' ? 'All' : monthLabel(filterMonth);
   const wText = filterWeek==='all' ? 'All' : filterWeek;
