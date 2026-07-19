@@ -348,6 +348,7 @@ let trades = [
 ];
 let nextId = 6;
 let editingId = null;
+let isAdminUser = false; // gates per-row Edit/Delete buttons; set true only after Firebase confirms admin
 let page = 1;
 const PAGE_SIZE = 10;
 let filterMonth = 'all';
@@ -498,6 +499,12 @@ function renderTable(data){
     const rrText = (Number(t.rr)>=0?'+':'')+Number(t.rr).toFixed(2)+'R';
     const beforeLink = t.before ? `<a class="linkbtn" href="${t.before}" target="_blank">View</a>` : '<span style="color:var(--line)">—</span>';
     const afterLink = t.after ? `<a class="linkbtn" href="${t.after}" target="_blank">View</a>` : '<span style="color:var(--line)">—</span>';
+    const actionsCell = isAdminUser
+      ? `<td><div class="rowbtns">
+        <button class="icobtn" onclick="openEdit(${t.id})" title="Edit">✎</button>
+        <button class="icobtn" onclick="deleteTrade(${t.id})" title="Delete">🗑</button>
+      </div></td>`
+      : `<td></td>`;
     return `<tr>
       <td>${t.date}</td>
       <td>${t.tf}</td>
@@ -508,10 +515,7 @@ function renderTable(data){
       <td class="${rrClass}">${rrText}</td>
       <td>${beforeLink}</td>
       <td>${afterLink}</td>
-      <td><div class="rowbtns">
-        <button class="icobtn" onclick="openEdit(${t.id})" title="Edit">✎</button>
-        <button class="icobtn" onclick="deleteTrade(${t.id})" title="Delete">🗑</button>
-      </div></td>
+      ${actionsCell}
     </tr>`;
   }).join('');
 }
@@ -545,6 +549,7 @@ function openAdd(){
   modalBg.classList.add('open');
 }
 function openEdit(id){
+  if(!isAdminUser) return;
   const t = trades.find(x=>x.id===id);
   if(!t) return;
   editingId = id;
@@ -563,6 +568,7 @@ function openEdit(id){
 }
 function closeModal(){ modalBg.classList.remove('open'); }
 function deleteTrade(id){
+  if(!isAdminUser) return;
   if(!confirm('Delete this trade?')) return;
   trades = trades.filter(t=>t.id!==id);
   renderAll();
@@ -675,6 +681,8 @@ renderAll();
           [btnAdd, btnExport, btnImport].forEach(function (b) {
             if (b) b.style.display = isAdmin ? '' : 'none';
           });
+          isAdminUser = isAdmin;
+          if (typeof renderAll === 'function') renderAll();
         });
       } else if (tries > 150) {
         clearInterval(iv); // give up after ~15s if Firebase never loads
