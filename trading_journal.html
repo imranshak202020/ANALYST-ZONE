@@ -377,7 +377,7 @@ function filteredTrades(){
     if(filterMonth!=='all' && monthKey(t.date)!==filterMonth) return false;
     if(filterWeek!=='all' && isoWeekKey(t.date)!==filterWeek) return false;
     return true;
-  }).sort((a,b)=> a.date.localeCompare(b.date));
+  }).sort((a,b)=> b.date.localeCompare(a.date));
 }
 
 function rebuildFilterOptions(){
