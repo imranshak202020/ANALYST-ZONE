@@ -361,6 +361,23 @@ document.getElementById('revSubmit').addEventListener('click', async ()=>{
 
 loadReviews();
 </script>
+<div id="az-logo-lightbox" style="display:none;position:fixed;inset:0;z-index:10001;background:rgba(0,0,0,.85);align-items:center;justify-content:center;cursor:zoom-out;">
+  <img id="az-logo-lightbox-img" src="" style="max-width:90%;max-height:90%;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.6);">
+</div>
+<script>
+  document.querySelectorAll('.logo .mark').forEach(function(img){
+    img.style.cursor = 'zoom-in';
+    img.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      document.getElementById('az-logo-lightbox-img').src = img.src;
+      document.getElementById('az-logo-lightbox').style.display = 'flex';
+    });
+  });
+  document.getElementById('az-logo-lightbox').addEventListener('click', function(){
+    this.style.display = 'none';
+  });
+</script>
 <script src="admin.js"></script>
 </body>
 </html>
