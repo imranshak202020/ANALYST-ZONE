@@ -144,6 +144,12 @@
   .copyright{border-top:1px solid var(--line);padding-top:20px;color:var(--muted);font-size:12px;font-family:var(--mono);text-align:center;}
 
   @media(max-width:700px){ .footer-grid{flex-direction:column;} }
+
+  .join-dropdown{position:relative;display:inline-block;}
+  .join-menu{position:absolute;top:calc(100% + 8px);right:0;min-width:210px;background:#12151c;border:1px solid var(--line);border-radius:10px;padding:8px;display:none;flex-direction:column;gap:4px;z-index:500;box-shadow:0 12px 30px rgba(0,0,0,.4);}
+  .join-menu.open{display:flex;}
+  .join-menu a{display:block;padding:9px 12px;border-radius:6px;color:var(--text);text-decoration:none;font-size:13.5px;}
+  .join-menu a:hover{background:rgba(201,168,76,.12);color:var(--gold);}
 </style>
 </head>
 <body data-page="index">
@@ -159,7 +165,14 @@
       <a href="https://www.facebook.com/share/g/1Cz5KbPbdn/" target="_blank" rel="noopener">Community</a>
       <a href="#testimonials">Reviews</a>
       <a href="trading_journal.html">Journal</a>
-      <a href="#community" class="cta">Join Free</a>
+      <div class="join-dropdown">
+        <a href="#community" class="cta join-free-toggle">Join Free</a>
+        <div class="join-menu">
+          <a href="https://www.facebook.com/analystzone0" target="_blank" rel="noopener">Facebook Page</a>
+          <a href="https://www.facebook.com/share/g/1Cz5KbPbdn/" target="_blank" rel="noopener">Facebook Group</a>
+          <a href="https://x.com/ANALYSTZONEE" target="_blank" rel="noopener">X (Twitter)</a>
+        </div>
+      </div>
     </div>
   </div>
 </nav>
@@ -237,7 +250,14 @@
         <li>Weekly live Q&A sessions</li>
         <li>Direct access to the journal & trade history</li>
       </ul>
-      <a href="https://www.facebook.com/share/g/1Cz5KbPbdn/" target="_blank" rel="noopener" class="btnlg primary">Join Free</a>
+      <div class="join-dropdown">
+        <a href="#" class="btnlg primary join-free-toggle">Join Free</a>
+        <div class="join-menu">
+          <a href="https://www.facebook.com/analystzone0" target="_blank" rel="noopener">Facebook Page</a>
+          <a href="https://www.facebook.com/share/g/1Cz5KbPbdn/" target="_blank" rel="noopener">Facebook Group</a>
+          <a href="https://x.com/ANALYSTZONEE" target="_blank" rel="noopener">X (Twitter)</a>
+        </div>
+      </div>
     </div>
     <div class="right">
       <div style="width:180px;height:180px;border-radius:50%;border:1px solid var(--gold-dim);display:flex;align-items:center;justify-content:center;background:radial-gradient(circle, rgba(201,168,76,.08), transparent 70%);">
@@ -376,6 +396,21 @@ loadReviews();
   });
   document.getElementById('az-logo-lightbox').addEventListener('click', function(){
     this.style.display = 'none';
+  });
+</script>
+<script>
+  document.querySelectorAll('.join-free-toggle').forEach(function(toggle){
+    toggle.addEventListener('click', function(e){
+      e.preventDefault();
+      e.stopPropagation();
+      const menu = toggle.parentElement.querySelector('.join-menu');
+      const isOpen = menu.classList.contains('open');
+      document.querySelectorAll('.join-menu.open').forEach(m=>m.classList.remove('open'));
+      if(!isOpen) menu.classList.add('open');
+    });
+  });
+  document.addEventListener('click', function(){
+    document.querySelectorAll('.join-menu.open').forEach(m=>m.classList.remove('open'));
   });
 </script>
 <script src="admin.js"></script>
