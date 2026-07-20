@@ -97,11 +97,18 @@ function initAdmin() {
 
   auth.onAuthStateChanged((user) => {
     const isAdmin = !!(user && user.email === ADMIN_EMAIL);
-    document.getElementById('az-admin-bar').style.display = isAdmin ? 'flex' : 'none';
-    document.getElementById('az-lock').style.display = isAdmin ? 'none' : 'flex';
+    window.__azIsAdmin = isAdmin;
+    document.getElementById('az-admin-bar').style.display = 'none';
+    document.getElementById('az-lock').style.display = 'flex';
+    document.getElementById('az-lock').innerHTML = isAdmin ? '&#9881;' : '&#128274;';
+    document.getElementById('az-lock').title = isAdmin ? 'Show admin panel' : 'Admin login';
     if (!isAdmin) {
+      window.__azEditMode = false;
       const content = document.getElementById('editable-content');
       if (content) content.setAttribute('contenteditable', 'false');
+      const toggleBtn = document.getElementById('az-toggle-edit');
+      if (toggleBtn) toggleBtn.textContent = 'Enable Edit Mode';
+      document.dispatchEvent(new CustomEvent('az-editmode-changed', { detail: { editing: false } }));
     }
   });
 }
@@ -111,12 +118,14 @@ function injectUI() {
   style.textContent = `
     #az-lock{position:fixed;bottom:18px;right:18px;z-index:9999;background:#12151c;border:1px solid #242a35;color:#8b93a1;width:42px;height:42px;border-radius:50%;align-items:center;justify-content:center;cursor:pointer;font-size:17px;box-shadow:0 4px 14px rgba(0,0,0,.4);display:flex;}
     #az-lock:hover{color:#c9a84c;border-color:#c9a84c;}
-    #az-admin-bar{position:fixed;top:0;right:0;bottom:0;width:220px;z-index:9999;background:#12151c;border-left:1px solid #242a35;padding:20px 16px;display:none;flex-direction:column;gap:10px;font-family:sans-serif;font-size:13px;color:#e9e7de;box-shadow:-4px 0 14px rgba(0,0,0,.4);}
-    #az-admin-bar strong{color:#c9a84c;font-size:13px;margin-bottom:6px;}
-    #az-admin-bar button{background:#c9a84c;color:#0d0f14;border:none;padding:9px 14px;border-radius:6px;font-weight:600;cursor:pointer;font-size:13px;width:100%;}
+    #az-admin-bar{position:fixed;top:16px;right:16px;width:auto;z-index:9999;background:#12151c;border:1px solid #242a35;border-radius:10px;padding:10px 12px;display:none;flex-direction:row;align-items:center;gap:8px;font-family:sans-serif;font-size:13px;color:#e9e7de;box-shadow:0 4px 14px rgba(0,0,0,.4);}
+    #az-admin-bar strong{color:#c9a84c;font-size:12px;margin-right:2px;white-space:nowrap;}
+    #az-admin-bar button{background:#c9a84c;color:#0d0f14;border:none;padding:7px 11px;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px;width:auto;white-space:nowrap;}
     #az-admin-bar button.secondary{background:transparent;border:1px solid #242a35;color:#e9e7de;}
-    #az-admin-bar #az-signout{margin-top:auto;}
-    #az-admin-bar #az-status{color:#8b93a1;font-size:12px;}
+    #az-admin-bar #az-status{color:#8b93a1;font-size:11px;max-width:110px;}
+    @media(max-width:640px){
+      #az-admin-bar{left:10px;right:10px;top:10px;flex-wrap:wrap;justify-content:center;}
+    }
     #az-login-modal{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:10000;display:none;align-items:center;justify-content:center;}
     #az-login-modal .box{background:#12151c;border:1px solid #242a35;border-radius:10px;padding:24px;width:280px;font-family:sans-serif;position:relative;}
     #az-login-modal input{width:100%;padding:8px;margin-bottom:10px;border-radius:6px;border:1px solid #242a35;background:#0d0f14;color:#e9e7de;box-sizing:border-box;}
@@ -130,7 +139,14 @@ function injectUI() {
   lock.id = 'az-lock';
   lock.title = 'Admin login';
   lock.innerHTML = '&#128274;';
-  lock.onclick = () => { document.getElementById('az-login-modal').style.display = 'flex'; };
+  lock.onclick = () => {
+    if (window.__azIsAdmin) {
+      const bar = document.getElementById('az-admin-bar');
+      bar.style.display = (bar.style.display === 'none') ? 'flex' : 'none';
+    } else {
+      document.getElementById('az-login-modal').style.display = 'flex';
+    }
+  };
   document.body.appendChild(lock);
 
   const modal = document.createElement('div');
@@ -166,13 +182,14 @@ function injectUI() {
   document.body.appendChild(bar);
   document.getElementById('az-signout').onclick = () => auth.signOut();
 
-  let editing = false;
+  window.__azEditMode = false;
   document.getElementById('az-toggle-edit').onclick = function () {
+    const newState = !window.__azEditMode;
+    window.__azEditMode = newState;
     const content = document.getElementById('editable-content');
-    if (!content) { alert('This page has no editable content region.'); return; }
-    editing = !editing;
-    content.setAttribute('contenteditable', editing ? 'true' : 'false');
-    this.textContent = editing ? 'Disable Edit Mode' : 'Enable Edit Mode';
+    if (content) content.setAttribute('contenteditable', newState ? 'true' : 'false');
+    this.textContent = newState ? 'Disable Edit Mode' : 'Enable Edit Mode';
+    document.dispatchEvent(new CustomEvent('az-editmode-changed', { detail: { editing: newState } }));
   };
 
   document.getElementById('az-save').onclick = () => {

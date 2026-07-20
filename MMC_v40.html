@@ -10129,6 +10129,7 @@ function goTo(idx) {
   const viewer = document.querySelector('.viewer');
   if(viewer) viewer.scrollTo({top:0,behavior:'smooth'});
   window.scrollTo({top:0,behavior:'smooth'});
+  try { localStorage.setItem('mmc_last_page', String(cur)); } catch(e) {}
 }
 function nav(d) { goTo(cur+d); }
 function toggleSidebar() {
@@ -10149,7 +10150,12 @@ document.addEventListener('keydown', e => {
   if(e.key==='ArrowRight') nav(1);
   if(e.key==='ArrowLeft') nav(-1);
 });
-goTo(67); // Opens on Page 68 - CANDLE FORMATION
+let startPage = 0;
+try {
+  const saved = parseInt(localStorage.getItem('mmc_last_page'), 10);
+  if(!isNaN(saved) && saved>=0 && saved<TOTAL) startPage = saved;
+} catch(e) {}
+goTo(startPage); // Opens on the page you last read (falls back to Page 1 the first time)
 </script>
 </body>
 </html>

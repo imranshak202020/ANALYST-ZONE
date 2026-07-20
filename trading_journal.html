@@ -158,8 +158,11 @@
   .tag.tsl{background:rgba(127,214,224,.12);color:#7fd6e0;border:1px solid rgba(127,214,224,.3);}
   .dir.long{color:var(--green);}
   .dir.short{color:var(--red);}
-  .rr.pos{color:var(--green);}
-  .rr.neg{color:var(--red);}
+  .rr-tp{color:var(--green);}
+  .rr-sl{color:var(--red);}
+  .rr-be{color:var(--gold);}
+  .rr-nc{color:var(--muted);}
+  .rr-tsl{color:#7fd6e0;}
   a.linkbtn{color:var(--gold);text-decoration:none;font-family:var(--bn);font-size:11.5px;border-bottom:1px dotted var(--gold-dim);}
   .rowbtns{display:flex;gap:6px;}
   .icobtn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;}
@@ -645,11 +648,12 @@ function renderTable(data){
     const resTagMap = {tp:'<span class="tag tp">TP</span>', sl:'<span class="tag sl">SL</span>', be:'<span class="tag be">BE</span>', nc:'<span class="tag nc">NC</span>', tsl:'<span class="tag tsl">TSL</span>'};
     const resTag = resTagMap[t.result] || resTagMap.be;
     const dirLabel = t.dir==='long' ? '<span class="dir long">Long</span>' : '<span class="dir short">Short</span>';
-    const rrClass = Number(t.rr)>=0 ? 'rr pos' : 'rr neg';
+    const rrColorMap = {tp:'rr-tp', sl:'rr-sl', be:'rr-be', nc:'rr-nc', tsl:'rr-tsl'};
+    const rrClass = 'rr ' + (rrColorMap[t.result] || (Number(t.rr)>=0 ? 'rr-tp' : 'rr-sl'));
     const rrText = (Number(t.rr)>=0?'+':'')+Number(t.rr).toFixed(2)+'R';
     const beforeLink = t.before ? `<a class="linkbtn" href="${t.before}" target="_blank">View</a>` : '<span style="color:var(--line)">—</span>';
     const afterLink = t.after ? `<a class="linkbtn" href="${t.after}" target="_blank">View</a>` : '<span style="color:var(--line)">—</span>';
-    const actionsCell = isAdminUser
+    const actionsCell = (isAdminUser && window.__azEditMode)
       ? `<td><div class="rowbtns">
         <button class="icobtn" onclick="openEdit(${t.id})" title="Edit">✎</button>
         <button class="icobtn" onclick="deleteTrade(${t.id})" title="Delete">🗑</button>
@@ -685,6 +689,7 @@ function renderAll(){
 // ---------- Modal / CRUD ----------
 const modalBg = document.getElementById('modalBg');
 function openAdd(){
+  if(!isAdminUser || !window.__azEditMode){ alert('Enable Edit Mode first from the admin panel.'); return; }
   editingId = null;
   document.getElementById('modalTitle').textContent = 'Add New Trade';
   document.getElementById('fDate').value = new Date().toISOString().slice(0,10);
@@ -700,7 +705,7 @@ function openAdd(){
   modalBg.classList.add('open');
 }
 function openEdit(id){
-  if(!isAdminUser) return;
+  if(!isAdminUser || !window.__azEditMode) return;
   const t = trades.find(x=>x.id===id);
   if(!t) return;
   editingId = id;
@@ -719,14 +724,14 @@ function openEdit(id){
 }
 function closeModal(){ modalBg.classList.remove('open'); }
 function deleteTrade(id){
-  if(!isAdminUser) return;
+  if(!isAdminUser || !window.__azEditMode) return;
   if(!confirm('Delete this trade?')) return;
   if(!db){ alert('Still connecting to the database — please wait a second and try again.'); return; }
   db.collection('trades').doc(String(id)).delete()
     .catch(function(err){ alert('Delete failed: '+err.message); });
 }
 function saveTrade(){
-  if(!isAdminUser){ alert('Only admin can add or edit trades.'); return; }
+  if(!isAdminUser || !window.__azEditMode){ alert('Enable Edit Mode first from the admin panel.'); return; }
   const date = document.getElementById('fDate').value;
   const pair = document.getElementById('fPair').value.trim();
   if(!date || !pair){ alert('Date and Pair are required.'); return; }
@@ -762,7 +767,7 @@ function exportJSON(){
   URL.revokeObjectURL(url);
 }
 function importJSON(file){
-  if(!isAdminUser){ alert('Only admin can import.'); return; }
+  if(!isAdminUser || !window.__azEditMode){ alert('Enable Edit Mode first from the admin panel.'); return; }
   const reader = new FileReader();
   reader.onload = e=>{
     try{
@@ -842,16 +847,27 @@ renderAll();
 
     var tradesSubscribed = false;
     var tries = 0;
+
+    function updateAdminButtons() {
+      var show = isAdminUser && !!window.__azEditMode;
+      [btnAdd, btnExport, btnImport].forEach(function (b) {
+        if (b) b.style.display = show ? '' : 'none';
+      });
+    }
+
+    document.addEventListener('az-editmode-changed', function () {
+      updateAdminButtons();
+      if (typeof renderAll === 'function') renderAll();
+    });
+
     var iv = setInterval(function () {
       tries++;
       if (typeof auth !== 'undefined' && auth) {
         clearInterval(iv);
         auth.onAuthStateChanged(function (user) {
           var isAdmin = !!(user && user.email === ADMIN_EMAIL);
-          [btnAdd, btnExport, btnImport].forEach(function (b) {
-            if (b) b.style.display = isAdmin ? '' : 'none';
-          });
           isAdminUser = isAdmin;
+          updateAdminButtons();
           if (!tradesSubscribed && typeof db !== 'undefined' && db) {
             tradesSubscribed = true;
             subscribeTrades();
