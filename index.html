@@ -319,10 +319,27 @@
 </div>
 
 <script>
-// ---------- Ticker: pulled from Imran's own MMC concept vocabulary ----------
-const concepts = ['MMC','SMC','IFC','CWC','GAPISM','TBC','CTA','FTC','BR DEMAND & SUPPLY','TREND WEAK CONCEPT','VOLUME EXHAUST','LIQUIDITY','MANIPULATION CANDLE','RANGE ANALYSIS','RETESTING REJECTION'];
+// ---------- Ticker: every topic from MMC_v40.html's table of contents ----------
+// Same order/index as TOC_ITEMS in MMC_v40.html — index here = page number there
+const concepts = [
+  "Financial Market — Overview","Market Types Detail","Opportunities — Detail","Chart Types — Market Language",
+  "CCPS — Candlestick Modules","1CP — Hammer","1CP — Hanging Man","1CP — Inverted Hammer","1CP — Semi Burned",
+  "1CP — Marubozu","1CP — Shooting Star","1CP — Doji & Spinning Top","2CP — Bullish Engulfing",
+  "2CP — Bearish Engulfing Detail","2CP — Inverse Engulfing","3CP — Star","4CP — Tree Pattern","KNEE CAP",
+  "CCC — Candle Combination Concept","WLC — Wick Line Concept","VOLUME ANALYSIS","QFL — Quantity Following Line",
+  "QB — Quantity Box","ROS — Repeating Of Structure","CCps — Complex Chart Patterns","N — Module","W — Module",
+  "M — Module","W OR M — FAKE REASON","PARALLEL CHANNEL","PARALLEL VENATION","PENNANTS OR WEDGE",
+  "BLUE RAY OR EXPANDING","RAT TRAPS OR W-TRAPS","SPRING TRAPS OR M-TRAPS","HEAD & SHOULDERS","ARC","ELIPS",
+  "LIQUIDITY","INSIDER VOLUME","BR DEMAND & SUPPLY","TREND WEAK CONCEPT","SOP — SEPARATION OF POWER",
+  "CBC — Candle Body Condense","VOLUME FILLUP","DECKER TREND LINE","CWL — CANDLE WICK LINE",
+  "CWC — Candle Wick Crossing","GAPISM","VOLUME EXHAUST","PARASITIC EFFECTS","AFTER EFFECTS",
+  "TBC — Trend Bending Concept","VIBRANCY & BLACKMIND CURVE","CTA — Chart Timeframe Analysis",
+  "FAKEOUT THEORIES","FTC — Fair Trading Concept","RETESTING REJECTION","RANGE ANALYSIS","GAP-UP & GAP-DOWN",
+  "COLD SQUIZE","NEEDED VOLUME","UPGRADE SMC — BOS","UPGRADE SMC — CHOCH","UPGRADE SMC — IFC","SMC",
+  "DNA STRUCTURE MAPING","CANDLE FORMATION"
+];
 const tickerEl = document.getElementById('ticker');
-const html = concepts.map(c=>`<span><b>${c}</b></span>`).join('');
+const html = concepts.map((c,i)=>`<span><a href="MMC_v40.html?goto=${i}" style="color:inherit;text-decoration:none;cursor:pointer;"><b>${c}</b></a></span>`).join('');
 tickerEl.innerHTML = html + html; // duplicate for seamless loop
 
 // ---------- Testimonials: static seed + shared, visitor-submitted reviews ----------

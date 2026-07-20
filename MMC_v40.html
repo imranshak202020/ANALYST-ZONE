@@ -10155,6 +10155,11 @@ try {
   const saved = parseInt(localStorage.getItem('mmc_last_page'), 10);
   if(!isNaN(saved) && saved>=0 && saved<TOTAL) startPage = saved;
 } catch(e) {}
+try {
+  const params = new URLSearchParams(location.search);
+  const goto = parseInt(params.get('goto'), 10);
+  if(!isNaN(goto) && goto>=0 && goto<TOTAL) startPage = goto; // link from homepage ticker wins over last-read page
+} catch(e) {}
 goTo(startPage); // Opens on the page you last read (falls back to Page 1 the first time)
 </script>
 </body>
