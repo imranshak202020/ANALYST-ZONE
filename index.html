@@ -60,7 +60,7 @@
 
   /* ticker */
   .ticker-outer{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--panel);overflow:hidden;padding:14px 0;}
-  .ticker{display:flex;width:max-content;animation:scroll 32s linear infinite;}
+  .ticker{display:flex;width:max-content;animation:scroll 65s linear infinite;}
   .ticker:hover{animation-play-state:paused;}
   .ticker span{font-family:var(--mono);font-size:13px;color:var(--muted);padding:0 26px;border-right:1px solid var(--line);white-space:nowrap;}
   .ticker span b{color:var(--gold);font-weight:500;}
@@ -177,6 +177,10 @@
   </div>
 </nav>
 
+<div class="ticker-outer">
+  <div class="ticker" id="ticker"></div>
+</div>
+
 <div id="editable-content">
 <section class="hero wrap">
   <div class="eyebrow"><span class="dot"></span> Private Discussion Group Open</div>
@@ -187,10 +191,6 @@
     <a href="trading_journal.html" class="btnlg ghost">View Live Journal →</a>
   </div>
 </section>
-
-<div class="ticker-outer">
-  <div class="ticker" id="ticker"></div>
-</div>
 
 <div class="wrap">
   <div class="stats-row">

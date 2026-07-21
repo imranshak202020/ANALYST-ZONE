@@ -320,7 +320,7 @@
         <thead>
           <tr>
             <th>Date</th><th>Timeframe</th><th>Pair</th><th>Direction</th><th>Result</th>
-            <th>No. Trades</th><th>RR</th><th>Before</th><th>After</th><th></th>
+            <th>No. Trades</th><th>RR</th><th>Before</th><th>After</th><th>Note</th><th></th>
           </tr>
         </thead>
         <tbody id="journalBody"></tbody>
@@ -640,7 +640,7 @@ function renderTable(data){
   document.getElementById('pageInfo').textContent = `Page ${page} of ${totalPages}`;
 
   if(pageData.length===0){
-    body.innerHTML = `<tr class="empty-row"><td colspan="10">No trades yet — click "+ Add Trade" to get started.</td></tr>`;
+    body.innerHTML = `<tr class="empty-row"><td colspan="11">No trades yet — click "+ Add Trade" to get started.</td></tr>`;
     return;
   }
 
@@ -653,6 +653,11 @@ function renderTable(data){
     const rrText = (Number(t.rr)>=0?'+':'')+Number(t.rr).toFixed(2)+'R';
     const beforeLink = t.before ? `<a class="linkbtn" href="${t.before}" target="_blank">View</a>` : '<span style="color:var(--line)">—</span>';
     const afterLink = t.after ? `<a class="linkbtn" href="${t.after}" target="_blank">View</a>` : '<span style="color:var(--line)">—</span>';
+    const noteCell = !isAdminUser
+      ? `<td></td>`
+      : t.note
+        ? `<td><button class="icobtn" onclick="viewNote(${t.id})" title="View Note">📝</button></td>`
+        : `<td><span style="color:var(--line)">—</span></td>`;
     const actionsCell = (isAdminUser && window.__azEditMode)
       ? `<td><div class="rowbtns">
         <button class="icobtn" onclick="openEdit(${t.id})" title="Edit">✎</button>
@@ -669,6 +674,7 @@ function renderTable(data){
       <td class="${rrClass}">${rrText}</td>
       <td>${beforeLink}</td>
       <td>${afterLink}</td>
+      ${noteCell}
       ${actionsCell}
     </tr>`;
   }).join('');
@@ -810,9 +816,16 @@ document.getElementById('fWeek').addEventListener('change', e=>{ filterWeek = e.
 document.getElementById('prevPage').onclick = ()=>{ if(page>1){page--; renderAll();} };
 document.getElementById('nextPage').onclick = ()=>{ page++; renderAll(); };
 
+function viewNote(id){
+  const t = trades.find(x=>x.id===id);
+  if(!t) return;
+  alert(t.note || 'No note for this trade.');
+}
+
 // expose for inline onclick
 window.openEdit = openEdit;
 window.deleteTrade = deleteTrade;
+window.viewNote = viewNote;
 
 renderAll();
 </script>
