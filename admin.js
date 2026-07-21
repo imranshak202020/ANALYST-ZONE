@@ -215,6 +215,9 @@ function loadSavedContentForEveryone() {
   db.collection('siteContent').doc(PAGE_KEY).get().then((doc) => {
     if (doc.exists && doc.data().html) {
       content.innerHTML = doc.data().html;
+      // The ticker is regenerated live from the current topic list on every
+      // load, so it should never be frozen at whatever was saved in the past.
+      if (typeof window.renderTicker === 'function') window.renderTicker();
     }
   }).catch(() => { /* no saved version yet — fine, keep default content */ });
 }
