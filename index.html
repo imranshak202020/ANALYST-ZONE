@@ -188,10 +188,6 @@
   </div>
 </section>
 
-<div class="ticker-outer">
-  <div class="ticker" id="ticker"></div>
-</div>
-
 <div class="wrap">
   <div class="stats-row">
     <div class="stat-cell"><div class="n">01</div><div class="l">Signature Program — MMC</div></div>
@@ -339,10 +335,28 @@ const concepts = [
   "DNA STRUCTURE MAPING","CANDLE FORMATION"
 ];
 window.renderTicker = function(){
-  const tickerEl = document.getElementById('ticker');
-  if(!tickerEl) return;
+  // Remove any stale/duplicate ticker markup that may have come from an
+  // old Firestore snapshot, then rebuild fresh and reinsert right after
+  // the hero section — this keeps the ticker immune to whatever content
+  // gets loaded from admin.js, past or future.
+  document.querySelectorAll('.ticker-outer').forEach(el => el.remove());
+
+  const tickerOuter = document.createElement('div');
+  tickerOuter.className = 'ticker-outer';
+  const tickerEl = document.createElement('div');
+  tickerEl.className = 'ticker';
+  tickerEl.id = 'ticker';
   const html = concepts.map((c,i)=>`<span><a href="MMC_v40.html?goto=${i}" style="color:inherit;text-decoration:none;cursor:pointer;"><b>${c}</b></a></span>`).join('');
   tickerEl.innerHTML = html + html; // duplicate for seamless loop
+  tickerOuter.appendChild(tickerEl);
+
+  const hero = document.querySelector('#editable-content .hero');
+  if (hero && hero.parentNode) {
+    hero.parentNode.insertBefore(tickerOuter, hero.nextSibling);
+  } else {
+    const content = document.getElementById('editable-content');
+    if (content) content.prepend(tickerOuter);
+  }
 };
 window.renderTicker();
 
