@@ -182,6 +182,23 @@
   .form-grid select, .form-grid input{width:100%;}
   .modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:18px;}
 
+  /* note-view modal */
+  .note-modal{max-width:460px;padding:0;overflow:hidden;}
+  .note-modal-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:18px 20px;border-bottom:1px solid var(--line);background:var(--panel2);}
+  .note-modal-head .nm-title{display:flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:var(--gold);}
+  .note-modal-head .nm-title .nm-icon{font-size:15px;}
+  .note-modal-head .nm-meta{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:4px;font-weight:400;}
+  .note-modal-close{background:none;border:none;color:var(--muted);font-size:20px;line-height:1;cursor:pointer;padding:2px 6px;border-radius:6px;}
+  .note-modal-close:hover{color:var(--gold);background:rgba(201,168,76,.08);}
+  .note-modal-body{padding:20px;max-height:52vh;overflow-y:auto;}
+  .note-modal-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;}
+  .note-modal-tags .nm-tag{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--muted);background:var(--panel2);}
+  .note-modal-tags .nm-tag.tp{color:var(--green);border-color:rgba(78,203,113,.35);}
+  .note-modal-tags .nm-tag.sl{color:var(--red);border-color:rgba(224,82,82,.35);}
+  .note-modal-tags .nm-tag.be{color:var(--gold);border-color:rgba(201,168,76,.35);}
+  .note-modal-text{font-family:var(--bn);font-size:14.5px;line-height:1.9;color:var(--text);white-space:pre-wrap;word-wrap:break-word;}
+  .note-modal-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;}
+
   footer.note{margin-top:26px;font-size:11px;color:var(--muted);font-family:var(--mono);text-align:center;line-height:1.7;}
 
   @media(max-width:900px){
@@ -396,6 +413,28 @@
     <div class="modal-actions">
       <button class="btn" id="btnCancel">Cancel</button>
       <button class="btn primary" id="btnSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="noteModalBg">
+  <div class="modal note-modal">
+    <div class="note-modal-head">
+      <div class="nm-title">
+        <span class="nm-icon">📝</span>
+        <div>
+          <div>Trade Note</div>
+          <div class="nm-meta" id="nmMeta"></div>
+        </div>
+      </div>
+      <button class="note-modal-close" id="noteModalClose" title="Close">&times;</button>
+    </div>
+    <div class="note-modal-body">
+      <div class="note-modal-tags" id="nmTags"></div>
+      <div class="note-modal-text" id="nmText"></div>
+    </div>
+    <div class="note-modal-foot">
+      <button class="btn" id="noteModalCloseBtn">Close</button>
     </div>
   </div>
 </div>
@@ -816,11 +855,22 @@ document.getElementById('fWeek').addEventListener('change', e=>{ filterWeek = e.
 document.getElementById('prevPage').onclick = ()=>{ if(page>1){page--; renderAll();} };
 document.getElementById('nextPage').onclick = ()=>{ page++; renderAll(); };
 
+const noteModalBg = document.getElementById('noteModalBg');
 function viewNote(id){
   const t = trades.find(x=>x.id===id);
   if(!t) return;
-  alert(t.note || 'No note for this trade.');
+  const resTagMap = {tp:'<span class="nm-tag tp">TP</span>', sl:'<span class="nm-tag sl">SL</span>', be:'<span class="nm-tag be">BE</span>', nc:'<span class="nm-tag">NC</span>', tsl:'<span class="nm-tag">TSL</span>'};
+  const dirLabel = t.dir==='long' ? 'Long' : 'Short';
+  document.getElementById('nmMeta').textContent = `${t.date}  •  ${t.pair}  •  ${t.tf}  •  ${dirLabel}`;
+  document.getElementById('nmTags').innerHTML = (resTagMap[t.result] || '') + `<span class="nm-tag">${(Number(t.rr)>=0?'+':'')+Number(t.rr).toFixed(2)}R</span>`;
+  document.getElementById('nmText').textContent = t.note || 'No note for this trade.';
+  noteModalBg.classList.add('open');
 }
+function closeNoteModal(){ noteModalBg.classList.remove('open'); }
+document.getElementById('noteModalClose').onclick = closeNoteModal;
+document.getElementById('noteModalCloseBtn').onclick = closeNoteModal;
+noteModalBg.addEventListener('click', e=>{ if(e.target===noteModalBg) closeNoteModal(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeNoteModal(); });
 
 // expose for inline onclick
 window.openEdit = openEdit;
