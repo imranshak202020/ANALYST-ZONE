@@ -40,14 +40,16 @@
    - Clicking it opens a login box. Only your admin email/password
      will succeed (everyone else gets an error).
    - Once logged in as admin, a sidebar appears on the right side of the
-     page with "Enable Edit Mode" and "Save Changes" buttons.
+     page with an "Enable Edit Mode" button.
    - Edit Mode makes the main page content directly editable (click
      into text and type, like a Word doc).
-   - "Save Changes" pushes your edits to Firestore. From then on,
-     EVERY visitor (including logged-out ones) will see your edited
-     version — the page fetches the saved version automatically.
-   - Only index.html has this editable text region ("Save Changes"
-     button does nothing on the trading journal page).
+   - Any edit you make is auto-saved to Firestore a moment after you
+     stop typing (no button to click). From then on, EVERY visitor
+     (including logged-out ones) will see your edited version — the
+     page fetches the saved version automatically.
+   - Only index.html has this editable text region (auto-save does
+     nothing on the trading journal page, since it has no
+     "editable-content" element).
    - The trading journal page has its own, separate sync: every
      Add/Edit/Delete of a trade is written straight to the "trades"
      collection in Firestore, and every visitor's page listens live
@@ -122,7 +124,7 @@ function injectUI() {
     #az-admin-bar strong{color:#c9a84c;font-size:12px;margin-right:2px;white-space:nowrap;}
     #az-admin-bar button{background:#c9a84c;color:#0d0f14;border:none;padding:7px 11px;border-radius:6px;font-weight:600;cursor:pointer;font-size:12px;width:auto;white-space:nowrap;}
     #az-admin-bar button.secondary{background:transparent;border:1px solid #242a35;color:#e9e7de;}
-    #az-admin-bar #az-status{color:#8b93a1;font-size:11px;max-width:110px;}
+    #az-admin-bar #az-status{color:#8b93a1;font-size:12px;max-width:140px;}
     @media(max-width:640px){
       #az-admin-bar{left:10px;right:10px;top:10px;flex-wrap:wrap;justify-content:center;}
     }
@@ -175,7 +177,6 @@ function injectUI() {
   bar.innerHTML = `
     <strong>Admin</strong>
     <button id="az-toggle-edit">Enable Edit Mode</button>
-    <button id="az-save" class="secondary">Save Changes</button>
     <span id="az-status"></span>
     <button id="az-signout" class="secondary">Sign Out</button>
   `;
@@ -192,20 +193,55 @@ function injectUI() {
     document.dispatchEvent(new CustomEvent('az-editmode-changed', { detail: { editing: newState } }));
   };
 
-  document.getElementById('az-save').onclick = () => {
-    const content = document.getElementById('editable-content');
-    if (!content) return;
-    document.getElementById('az-status').textContent = 'Saving...';
-    db.collection('siteContent').doc(PAGE_KEY).set({
-      html: content.innerHTML,
-      updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-    }).then(() => {
-      document.getElementById('az-status').textContent = 'Saved ✓';
-      setTimeout(() => { document.getElementById('az-status').textContent = ''; }, 2500);
-    }).catch((err) => {
-      document.getElementById('az-status').textContent = 'Error: ' + err.message;
-    });
-  };
+  setupAutoSave();
+}
+
+// Watches the editable region and pushes changes to Firestore on its own,
+// a short moment after the admin stops typing (debounced) — no button needed.
+function setupAutoSave() {
+  const content = document.getElementById('editable-content');
+  if (!content) return;
+
+  let saveTimer = null;
+  const AUTOSAVE_DELAY_MS = 1500;
+
+  function scheduleSave() {
+    if (!window.__azIsAdmin || !window.__azEditMode) return;
+    const statusEl = document.getElementById('az-status');
+    if (statusEl) statusEl.textContent = 'Editing...';
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => {
+      if (statusEl) statusEl.textContent = 'Saving...';
+      db.collection('siteContent').doc(PAGE_KEY).set({
+        html: content.innerHTML,
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      }).then(() => {
+        if (statusEl) {
+          statusEl.textContent = 'Saved ✓';
+          setTimeout(() => { statusEl.textContent = ''; }, 2000);
+        }
+      }).catch((err) => {
+        if (statusEl) statusEl.textContent = 'Error: ' + err.message;
+      });
+    }, AUTOSAVE_DELAY_MS);
+  }
+
+  content.addEventListener('input', scheduleSave);
+
+  // Also catch changes that don't fire 'input' in every browser (e.g. some
+  // contenteditable formatting actions) by watching DOM mutations while in
+  // edit mode.
+  const observer = new MutationObserver(() => {
+    if (window.__azIsAdmin && window.__azEditMode) scheduleSave();
+  });
+  document.addEventListener('az-editmode-changed', (e) => {
+    if (e.detail.editing) {
+      observer.observe(content, { childList: true, subtree: true, characterData: true });
+    } else {
+      observer.disconnect();
+      if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+    }
+  });
 }
 
 // Runs for every visitor (admin or not) so they all see the latest saved edits.

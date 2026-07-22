@@ -513,20 +513,10 @@ function subscribeTrades(){
   if(!db) return;
   db.collection('trades').onSnapshot(function(snapshot){
     if(snapshot.empty){
-      // Nothing in Firestore yet. If we're logged in as admin, push the
-      // current (demo) trades up once so the collection isn't empty —
-      // this only succeeds for the admin because of the Firestore rules.
-      if(isAdminUser && trades.length){
-        const batch = db.batch();
-        trades.forEach(function(t){
-          const ref = db.collection('trades').doc(String(t.id));
-          batch.set(ref, {
-            date:t.date, tf:t.tf, pair:t.pair, dir:t.dir, result:t.result,
-            count:t.count, rr:t.rr, before:t.before||'', after:t.after||'', note:t.note||''
-          });
-        });
-        batch.commit().catch(function(){ /* not admin yet or rules missing — ignore */ });
-      }
+      // Nothing in Firestore yet — just show empty state.
+      // (We used to auto-push the local demo trades here, but that caused
+      // duplicate/extra rows to appear across sessions, so it's removed.)
+      trades = [];
       renderAll();
       return;
     }
@@ -790,12 +780,11 @@ function saveTrade(){
     after:document.getElementById('fAfter').value.trim(),
     note:document.getElementById('fNote').value.trim(),
   };
-  const id = editingId || nextId;
+  const id = editingId || Date.now();
   const saveBtn = document.getElementById('btnSave');
   saveBtn.disabled = true;
   db.collection('trades').doc(String(id)).set(payload)
     .then(function(){
-      if(!editingId) nextId = id + 1;
       closeModal();
     })
     .catch(function(err){ alert('Save failed: '+err.message); })
