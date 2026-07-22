@@ -22,6 +22,11 @@
               allow write: if request.auth != null &&
                 request.auth.token.email == "YOUR_ADMIN_EMAIL_HERE";
             }
+            match /marketBias/{assetId} {
+              allow read: if true;
+              allow write: if request.auth != null &&
+                request.auth.token.email == "YOUR_ADMIN_EMAIL_HERE";
+            }
           }
         }
 
@@ -55,6 +60,10 @@
      collection in Firestore, and every visitor's page listens live
      to that collection — so admin's changes show up for everyone
      automatically, without needing a "Save Changes" click.
+   - The Market Bias Tracker (embedded on index.html) works the same
+     way, syncing to the "marketBias" collection — one document per
+     asset. Add/Edit/Delete controls only show for admin, and only
+     while Edit Mode is enabled from the admin bar.
    ============================================================ */
 
 const firebaseConfig = {
