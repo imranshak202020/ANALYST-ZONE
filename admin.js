@@ -104,7 +104,11 @@ function initAdmin() {
   db = firebase.firestore();
 
   injectUI();
-  loadSavedContentForEveryone();
+  // NOTE: General text editing (editable-content auto-save/load) is disabled
+  // on purpose. GitHub's static HTML is always the source of truth for the
+  // main page text now. Trade Journal and Market Bias Tracker are untouched —
+  // they keep syncing live via their own Firestore collections.
+  // loadSavedContentForEveryone();
 
   auth.onAuthStateChanged((user) => {
     const isAdmin = !!(user && user.email === ADMIN_EMAIL);
@@ -196,13 +200,15 @@ function injectUI() {
   document.getElementById('az-toggle-edit').onclick = function () {
     const newState = !window.__azEditMode;
     window.__azEditMode = newState;
-    const content = document.getElementById('editable-content');
-    if (content) content.setAttribute('contenteditable', newState ? 'true' : 'false');
+    // NOTE: general text (editable-content) is intentionally no longer made
+    // contenteditable here. This toggle now only controls the Add/Edit/Delete
+    // buttons for the Market Bias Tracker (and anything else listening for
+    // 'az-editmode-changed'), not the homepage headline/paragraph text.
     this.textContent = newState ? 'Disable Edit Mode' : 'Enable Edit Mode';
     document.dispatchEvent(new CustomEvent('az-editmode-changed', { detail: { editing: newState } }));
   };
 
-  setupAutoSave();
+  // setupAutoSave(); // disabled — general text no longer auto-saves to Firestore
 }
 
 // Watches the editable region and pushes changes to Firestore on its own,
