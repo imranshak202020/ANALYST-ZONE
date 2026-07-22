@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Noto+Sans+Bengali:wght@400;500;600&family=Crimson+Pro:ital,wght@0,400;0,500;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0d0f14;
@@ -382,6 +383,229 @@
 #market-bias-app.mb-is-admin .mb-entry-form.mb-admin-only{display:block;}
 #market-bias-app .mb-viewer-note{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:16px;}
 
+/* ===== Market Session Tracker (scoped under #session-tracker-widget) ===== */
+#session-tracker-widget{
+  --st-bg:#0d0f14;
+  --st-panel:#12151c;
+  --st-border:#232838;
+  --st-gold:#d4af37;
+  --st-green:#22c55e;
+  --st-red:#ef4444;
+  --st-text:#e7e9ee;
+  --st-muted:#8b94a7;
+  display:flex;
+  justify-content:center;
+}
+#session-tracker-widget *{box-sizing:border-box;}
+#session-tracker-widget .st-card{
+  width:100%;
+  max-width:720px;
+  background:var(--st-panel);
+  border:1px solid var(--st-border);
+  border-radius:14px;
+  padding:22px 22px 26px;
+  font-family:'Space Grotesk',var(--sans);
+  color:var(--st-text);
+}
+#session-tracker-widget .st-head{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  margin-bottom:18px;
+  flex-wrap:wrap;
+  gap:6px;
+}
+#session-tracker-widget .st-head h3{
+  font-family:'Space Grotesk',var(--sans);
+  font-size:16px;
+  letter-spacing:0.06em;
+  text-transform:uppercase;
+  color:var(--st-gold);
+  margin:0;
+  font-weight:700;
+}
+#session-tracker-widget .st-utc{
+  font-family:'JetBrains Mono','DM Mono',monospace;
+  font-size:13px;
+  color:var(--st-muted);
+}
+#session-tracker-widget .st-utc b{color:var(--st-text);font-weight:600;}
+
+#session-tracker-widget .st-timeline{
+  position:relative;
+  height:64px;
+  background:#0a0c11;
+  border:1px solid var(--st-border);
+  border-radius:8px;
+  margin-bottom:8px;
+  overflow:hidden;
+}
+#session-tracker-widget .st-seg{
+  position:absolute;
+  top:0;
+  bottom:0;
+  border-right:1px solid var(--st-border);
+}
+#session-tracker-widget .st-seg .st-lbl{
+  position:absolute;
+  top:6px;
+  left:8px;
+  font-size:10px;
+  letter-spacing:0.08em;
+  text-transform:uppercase;
+  color:var(--st-muted);
+  font-weight:600;
+  white-space:nowrap;
+}
+#session-tracker-widget .st-seg.active{ background:rgba(34,197,94,0.10); }
+#session-tracker-widget .st-seg.active .st-lbl{ color:var(--st-green); }
+#session-tracker-widget .st-now-marker{
+  position:absolute;
+  top:0;
+  bottom:0;
+  width:2px;
+  background:var(--st-gold);
+  box-shadow:0 0 8px var(--st-gold);
+  z-index:5;
+}
+#session-tracker-widget .st-now-marker::before{
+  content:'';
+  position:absolute;
+  top:-1px;
+  left:-3px;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--st-gold);
+}
+#session-tracker-widget .st-hourticks{
+  display:flex;
+  justify-content:space-between;
+  font-family:'JetBrains Mono','DM Mono',monospace;
+  font-size:9px;
+  color:#4a5164;
+  margin-bottom:20px;
+  padding:0 1px;
+}
+
+#session-tracker-widget .st-cards{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:10px;
+}
+#session-tracker-widget .st-cell{
+  background:#0a0c11;
+  border:1px solid var(--st-border);
+  border-radius:10px;
+  padding:14px 12px;
+  position:relative;
+}
+#session-tracker-widget .st-cell.live{
+  border-color:var(--st-green);
+  box-shadow:0 0 0 1px rgba(34,197,94,0.25), 0 0 18px rgba(34,197,94,0.08);
+}
+#session-tracker-widget .st-cell .st-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:10px;
+}
+#session-tracker-widget .st-cell .st-city{
+  font-family:'Space Grotesk',var(--sans);
+  font-weight:700;
+  font-size:14px;
+}
+#session-tracker-widget .st-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--st-red);
+  flex-shrink:0;
+}
+#session-tracker-widget .st-cell.live .st-dot{
+  background:var(--st-green);
+  box-shadow:0 0 6px var(--st-green);
+}
+#session-tracker-widget .st-status{
+  font-size:11px;
+  color:var(--st-muted);
+  margin-bottom:2px;
+}
+#session-tracker-widget .st-cell.live .st-status{ color:var(--st-green); }
+#session-tracker-widget .st-countdown{
+  font-family:'JetBrains Mono','DM Mono',monospace;
+  font-size:18px;
+  font-weight:700;
+  color:var(--st-text);
+}
+#session-tracker-widget .st-range{
+  font-family:'JetBrains Mono','DM Mono',monospace;
+  font-size:10px;
+  color:#4a5164;
+  margin-top:6px;
+}
+
+#session-tracker-widget .st-footer{
+  margin-top:18px;
+  padding-top:14px;
+  border-top:1px solid var(--st-border);
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:8px;
+}
+#session-tracker-widget .st-next-up{
+  font-size:12px;
+  color:var(--st-muted);
+}
+#session-tracker-widget .st-next-up b{ color:var(--st-gold); font-family:'JetBrains Mono','DM Mono',monospace; }
+#session-tracker-widget .st-legend{
+  display:flex;
+  gap:14px;
+  font-size:10px;
+  color:var(--st-muted);
+}
+#session-tracker-widget .st-legend span{ display:flex; align-items:center; gap:5px; }
+#session-tracker-widget .st-legend .sw{ width:8px;height:8px;border-radius:50%; }
+
+@media (max-width:600px){
+  #session-tracker-widget .st-cards{grid-template-columns:repeat(2,1fr);}
+}
+@media (max-width:360px){
+  #session-tracker-widget .st-cards{grid-template-columns:1fr;}
+}
+
+/* ===== Market Session modal popup ===== */
+.st-modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.65);
+  z-index:9998;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+}
+.st-modal-overlay.open{ display:flex; }
+.st-modal-box{
+  position:relative;
+  width:100%;
+  max-width:760px;
+  max-height:90vh;
+  overflow-y:auto;
+}
+.st-modal-close{
+  position:absolute;
+  top:-6px;
+  right:0;
+  font-size:26px;
+  line-height:1;
+  color:var(--muted);
+  cursor:pointer;
+  padding:6px 10px;
+  z-index:2;
+}
+.st-modal-close:hover{ color:var(--gold); }
+
 </style>
 </head>
 <body data-page="index">
@@ -393,10 +617,9 @@
       <div class="name">ANALYST<span> ZONE</span></div>
     </a>
     <div class="navlinks">
+      <a href="#" id="market-session-nav-link">Market Session</a>
       <a href="#market-bias">Market Bias</a>
       <a href="#offerings">Programs</a>
-      <a href="https://www.facebook.com/share/g/1Cz5KbPbdn/" target="_blank" rel="noopener">Community</a>
-      <a href="#testimonials">Reviews</a>
       <a href="trading_journal.html">Journal</a>
       <div class="join-dropdown">
         <a href="#community" class="cta join-free-toggle">Join Free</a>
@@ -427,6 +650,33 @@
     <div class="stat-cell"><div class="n">24/7</div><div class="l">Journal Tracking</div></div>
     <div class="stat-cell"><div class="n">Live</div><div class="l">Weekly Q&A Sessions</div></div>
     <div class="stat-cell"><div class="n">Free</div><div class="l">Public Discussion Group</div></div>
+  </div>
+</div>
+
+<div id="market-session-modal" class="st-modal-overlay">
+  <div class="st-modal-box">
+    <span class="st-modal-close" id="st-modal-close">&times;</span>
+    <div id="session-tracker-widget">
+      <div class="st-card">
+        <div class="st-head">
+          <h3>Session Tracker</h3>
+          <div class="st-utc">Local <b id="st-utcClock">--:--:--</b></div>
+        </div>
+
+        <div class="st-timeline" id="st-timeline"></div>
+        <div class="st-hourticks" id="st-hourticks"></div>
+
+        <div class="st-cards" id="st-cards"></div>
+
+        <div class="st-footer">
+          <div class="st-next-up" id="st-nextUp">Loading...</div>
+          <div class="st-legend">
+            <span><i class="sw" style="background:var(--st-green)"></i>Live</span>
+            <span><i class="sw" style="background:var(--st-red)"></i>Closed</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1102,6 +1352,184 @@ loadReviews();
   });
 })();
 
+</script>
+
+<script>
+// ===== Market Session Tracker (scoped, no globals leaked) =====
+(function(){
+  const SESSIONS = [
+    { key:'sydney',  name:'Sydney',    start:22, end:7  },
+    { key:'tokyo',   name:'Tokyo',     start:0,  end:9  },
+    { key:'london',  name:'London',    start:8,  end:17 },
+    { key:'newyork', name:'New York',  start:13, end:22 },
+  ];
+
+  function pad(n){ return n.toString().padStart(2,'0'); }
+
+  function utcHourToLocalLabel(hourUtc){
+    const now = new Date();
+    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hourUtc, 0, 0));
+    return pad(d.getHours())+':'+pad(d.getMinutes());
+  }
+
+  function fmtDur(ms){
+    let s = Math.floor(ms/1000);
+    const h = Math.floor(s/3600); s -= h*3600;
+    const m = Math.floor(s/60); s -= m*60;
+    return `${pad(h)}:${pad(m)}:${pad(s)}`;
+  }
+
+  const timelineEl = document.getElementById('st-timeline');
+  const hourticksEl = document.getElementById('st-hourticks');
+  const cardsEl = document.getElementById('st-cards');
+  const utcClockEl = document.getElementById('st-utcClock');
+  const nextUpEl = document.getElementById('st-nextUp');
+
+  if(!timelineEl || !cardsEl) return; // widget not on this page
+
+  function buildTimeline(){
+    timelineEl.innerHTML = '';
+    SESSIONS.forEach(s => {
+      if(s.end > s.start){
+        const seg = document.createElement('div');
+        seg.className = 'st-seg';
+        seg.dataset.key = s.key;
+        seg.style.left = (s.start/24*100)+'%';
+        seg.style.width = ((s.end-s.start)/24*100)+'%';
+        seg.innerHTML = `<span class="st-lbl">${s.name}</span>`;
+        timelineEl.appendChild(seg);
+      } else {
+        const segA = document.createElement('div');
+        segA.className = 'st-seg';
+        segA.dataset.key = s.key;
+        segA.style.left = (s.start/24*100)+'%';
+        segA.style.width = ((24-s.start)/24*100)+'%';
+        segA.innerHTML = `<span class="st-lbl">${s.name}</span>`;
+        timelineEl.appendChild(segA);
+
+        const segB = document.createElement('div');
+        segB.className = 'st-seg';
+        segB.dataset.key = s.key;
+        segB.style.left = '0%';
+        segB.style.width = (s.end/24*100)+'%';
+        timelineEl.appendChild(segB);
+      }
+    });
+    const marker = document.createElement('div');
+    marker.className = 'st-now-marker';
+    marker.id = 'st-nowMarker';
+    timelineEl.appendChild(marker);
+
+    hourticksEl.innerHTML = '';
+    for(let h=0; h<=24; h+=3){
+      const t = document.createElement('span');
+      t.textContent = utcHourToLocalLabel(h%24);
+      hourticksEl.appendChild(t);
+    }
+  }
+
+  function buildCards(){
+    cardsEl.innerHTML = '';
+    SESSIONS.forEach(s => {
+      const card = document.createElement('div');
+      card.className = 'st-cell';
+      card.id = 'st-card-'+s.key;
+      card.innerHTML = `
+        <div class="st-top">
+          <span class="st-city">${s.name}</span>
+          <span class="st-dot"></span>
+        </div>
+        <div class="st-status" id="st-stlbl-${s.key}">—</div>
+        <div class="st-countdown" id="st-cd-${s.key}">--:--:--</div>
+        <div class="st-range">${utcHourToLocalLabel(s.start)}–${utcHourToLocalLabel(s.end)} local</div>
+      `;
+      cardsEl.appendChild(card);
+    });
+  }
+
+  function nowUtcSecs(){
+    const d = new Date();
+    return d.getUTCHours()*3600 + d.getUTCMinutes()*60 + d.getUTCSeconds();
+  }
+
+  function tick(){
+    const now = new Date();
+    const secsNow = nowUtcSecs();
+    utcClockEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+    document.getElementById('st-nowMarker').style.left = (secsNow/86400*100)+'%';
+
+    let soonestNextMs = Infinity, soonestNextName = '';
+
+    SESSIONS.forEach(s => {
+      const startS = s.start*3600, endS = s.end*3600;
+      const wraps = s.end <= s.start;
+      const isActive = wraps
+        ? (secsNow >= startS || secsNow < endS)
+        : (secsNow >= startS && secsNow < endS);
+
+      const card = document.getElementById('st-card-'+s.key);
+      const segs = document.querySelectorAll('.st-seg[data-key="'+s.key+'"]');
+      const stlbl = document.getElementById('st-stlbl-'+s.key);
+      const cd = document.getElementById('st-cd-'+s.key);
+
+      card.classList.toggle('live', isActive);
+      segs.forEach(seg => seg.classList.toggle('active', isActive));
+
+      if(isActive){
+        let remainS = wraps
+          ? (secsNow >= startS ? (86400 - secsNow + endS) : (endS - secsNow))
+          : (endS - secsNow);
+        stlbl.textContent = 'Live · closes in';
+        cd.textContent = fmtDur(remainS*1000);
+      } else {
+        let untilStartS = startS - secsNow;
+        if(untilStartS <= 0) untilStartS += 86400;
+        stlbl.textContent = 'Closed · opens in';
+        cd.textContent = fmtDur(untilStartS*1000);
+        if(untilStartS*1000 < soonestNextMs){
+          soonestNextMs = untilStartS*1000;
+          soonestNextName = s.name;
+        }
+      }
+    });
+
+    if(soonestNextName){
+      nextUpEl.innerHTML = `Next session: <b>${soonestNextName} — ${fmtDur(soonestNextMs)}</b>`;
+    } else {
+      nextUpEl.textContent = 'All sessions currently active';
+    }
+  }
+
+  buildTimeline();
+  buildCards();
+  tick();
+  setInterval(tick, 1000);
+
+  // ---- modal open/close wiring ----
+  const modal = document.getElementById('market-session-modal');
+  const navLink = document.getElementById('market-session-nav-link');
+  const closeBtn = document.getElementById('st-modal-close');
+
+  function openModal(e){
+    if(e) e.preventDefault();
+    if(modal) modal.classList.add('open');
+  }
+  function closeModal(){
+    if(modal) modal.classList.remove('open');
+  }
+
+  if(navLink) navLink.addEventListener('click', openModal);
+  if(closeBtn) closeBtn.addEventListener('click', closeModal);
+  if(modal){
+    modal.addEventListener('click', (e) => {
+      if(e.target === modal) closeModal(); // click on dark backdrop
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape') closeModal();
+  });
+})();
 </script>
 
 </body>

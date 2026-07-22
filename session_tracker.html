@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Session Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=JetBrains+Mono:wght@400;500;700&family=Hind+Siliguri:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0d0f14;
+    --panel:#12151c;
+    --border:#232838;
+    --gold:#d4af37;
+    --gold-dim:#7a6a2e;
+    --green:#22c55e;
+    --red:#ef4444;
+    --text:#e7e9ee;
+    --muted:#8b94a7;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:transparent;}
+  body{
+    font-family:'Space Grotesk',sans-serif;
+    color:var(--text);
+    display:flex;
+    justify-content:center;
+    padding:24px 12px;
+  }
+  .wrap{
+    width:100%;
+    max-width:720px;
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:14px;
+    padding:22px 22px 26px;
+  }
+  .head{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-bottom:18px;
+    flex-wrap:wrap;
+    gap:6px;
+  }
+  .head h1{
+    font-family:'Space Grotesk',sans-serif;
+    font-size:16px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--gold);
+    margin:0;
+    font-weight:700;
+  }
+  .head .utc{
+    font-family:'JetBrains Mono',monospace;
+    font-size:13px;
+    color:var(--muted);
+  }
+  .utc b{color:var(--text);font-weight:600;}
+
+  /* 24h timeline */
+  .timeline{
+    position:relative;
+    height:64px;
+    background:#0a0c11;
+    border:1px solid var(--border);
+    border-radius:8px;
+    margin-bottom:8px;
+    overflow:hidden;
+  }
+  .seg{
+    position:absolute;
+    top:0;
+    bottom:0;
+    border-right:1px solid var(--border);
+  }
+  .seg .lbl{
+    position:absolute;
+    top:6px;
+    left:8px;
+    font-size:10px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+    font-weight:600;
+    white-space:nowrap;
+  }
+  .seg.active{ background:rgba(34,197,94,0.10); }
+  .seg.active .lbl{ color:var(--green); }
+  .now-marker{
+    position:absolute;
+    top:0;
+    bottom:0;
+    width:2px;
+    background:var(--gold);
+    box-shadow:0 0 8px var(--gold);
+    z-index:5;
+  }
+  .now-marker::before{
+    content:'';
+    position:absolute;
+    top:-1px;
+    left:-3px;
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:var(--gold);
+  }
+  .hourticks{
+    display:flex;
+    justify-content:space-between;
+    font-family:'JetBrains Mono',monospace;
+    font-size:9px;
+    color:#4a5164;
+    margin-bottom:20px;
+    padding:0 1px;
+  }
+
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:10px;
+  }
+  .card{
+    background:#0a0c11;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:14px 12px;
+    position:relative;
+  }
+  .card.live{
+    border-color:var(--green);
+    box-shadow:0 0 0 1px rgba(34,197,94,0.25), 0 0 18px rgba(34,197,94,0.08);
+  }
+  .card .top{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .card .city{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:14px;
+  }
+  .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:var(--red);
+    flex-shrink:0;
+  }
+  .card.live .dot{
+    background:var(--green);
+    box-shadow:0 0 6px var(--green);
+  }
+  .status{
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:2px;
+  }
+  .card.live .status{ color:var(--green); }
+  .countdown{
+    font-family:'JetBrains Mono',monospace;
+    font-size:18px;
+    font-weight:700;
+    color:var(--text);
+  }
+  .range{
+    font-family:'JetBrains Mono',monospace;
+    font-size:10px;
+    color:#4a5164;
+    margin-top:6px;
+  }
+
+  .footer{
+    margin-top:18px;
+    padding-top:14px;
+    border-top:1px solid var(--border);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:8px;
+  }
+  .next-up{
+    font-size:12px;
+    color:var(--muted);
+  }
+  .next-up b{ color:var(--gold); font-family:'JetBrains Mono',monospace; }
+  .legend{
+    display:flex;
+    gap:14px;
+    font-size:10px;
+    color:var(--muted);
+  }
+  .legend span{ display:flex; align-items:center; gap:5px; }
+  .legend .sw{ width:8px;height:8px;border-radius:50%; }
+
+  @media (max-width:600px){
+    .cards{grid-template-columns:repeat(2,1fr);}
+  }
+  @media (max-width:360px){
+    .cards{grid-template-columns:1fr;}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="head">
+    <h1>Session Tracker</h1>
+    <div class="utc">Local <b id="utcClock">--:--:--</b></div>
+  </div>
+
+  <div class="timeline" id="timeline"></div>
+  <div class="hourticks" id="hourticks"></div>
+
+  <div class="cards" id="cards"></div>
+
+  <div class="footer">
+    <div class="next-up" id="nextUp">Loading...</div>
+    <div class="legend">
+      <span><i class="sw" style="background:var(--green)"></i>Live</span>
+      <span><i class="sw" style="background:var(--red)"></i>Closed</span>
+    </div>
+  </div>
+</div>
+
+<script>
+// Session windows are anchored to real UTC market hours (source of truth,
+// same for every visitor). Display below converts these to each visitor's
+// own device timezone automatically.
+const SESSIONS = [
+  { key:'sydney',  name:'Sydney',    start:22, end:7  },
+  { key:'tokyo',   name:'Tokyo',     start:0,  end:9  },
+  { key:'london',  name:'London',    start:8,  end:17 },
+  { key:'newyork', name:'New York',  start:13, end:22 },
+];
+
+function utcHourToLocalLabel(hourUtc){
+  const now = new Date();
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hourUtc, 0, 0));
+  return pad(d.getHours())+':'+pad(d.getMinutes());
+}
+
+const timelineEl = document.getElementById('timeline');
+const hourticksEl = document.getElementById('hourticks');
+const cardsEl = document.getElementById('cards');
+const utcClockEl = document.getElementById('utcClock');
+const nextUpEl = document.getElementById('nextUp');
+
+function pad(n){ return n.toString().padStart(2,'0'); }
+
+function fmtDur(ms){
+  let s = Math.floor(ms/1000);
+  const h = Math.floor(s/3600); s -= h*3600;
+  const m = Math.floor(s/60); s -= m*60;
+  return `${pad(h)}:${pad(m)}:${pad(s)}`;
+}
+
+// build static timeline segments + hour ticks once
+function buildTimeline(){
+  timelineEl.innerHTML = '';
+  SESSIONS.forEach(s => {
+    if(s.end > s.start){
+      const seg = document.createElement('div');
+      seg.className = 'seg';
+      seg.dataset.key = s.key;
+      seg.style.left = (s.start/24*100)+'%';
+      seg.style.width = ((s.end-s.start)/24*100)+'%';
+      seg.innerHTML = `<span class="lbl">${s.name}</span>`;
+      timelineEl.appendChild(seg);
+    } else {
+      // wraps past midnight: render as two pieces, label on the first
+      const segA = document.createElement('div');
+      segA.className = 'seg';
+      segA.dataset.key = s.key;
+      segA.style.left = (s.start/24*100)+'%';
+      segA.style.width = ((24-s.start)/24*100)+'%';
+      segA.innerHTML = `<span class="lbl">${s.name}</span>`;
+      timelineEl.appendChild(segA);
+
+      const segB = document.createElement('div');
+      segB.className = 'seg';
+      segB.dataset.key = s.key;
+      segB.style.left = '0%';
+      segB.style.width = (s.end/24*100)+'%';
+      timelineEl.appendChild(segB);
+    }
+  });
+  const marker = document.createElement('div');
+  marker.className = 'now-marker';
+  marker.id = 'nowMarker';
+  timelineEl.appendChild(marker);
+
+  hourticksEl.innerHTML = '';
+  for(let h=0; h<=24; h+=3){
+    const t = document.createElement('span');
+    t.textContent = utcHourToLocalLabel(h%24);
+    hourticksEl.appendChild(t);
+  }
+}
+
+function buildCards(){
+  cardsEl.innerHTML = '';
+  SESSIONS.forEach(s => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.id = 'card-'+s.key;
+    card.innerHTML = `
+      <div class="top">
+        <span class="city">${s.name}</span>
+        <span class="dot"></span>
+      </div>
+      <div class="status" id="stlbl-${s.key}">—</div>
+      <div class="countdown" id="cd-${s.key}">--:--:--</div>
+      <div class="range">${utcHourToLocalLabel(s.start)}–${utcHourToLocalLabel(s.end)} local</div>
+    `;
+    cardsEl.appendChild(card);
+  });
+}
+
+function nowUtcSecs(){
+  const d = new Date();
+  return d.getUTCHours()*3600 + d.getUTCMinutes()*60 + d.getUTCSeconds();
+}
+
+function tick(){
+  const now = new Date();
+  const secsNow = nowUtcSecs();
+  utcClockEl.textContent = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+
+  document.getElementById('nowMarker').style.left = (secsNow/86400*100)+'%';
+
+  let soonestNextMs = Infinity, soonestNextName = '';
+
+  SESSIONS.forEach(s => {
+    const startS = s.start*3600, endS = s.end*3600;
+    const wraps = s.end <= s.start;
+    const isActive = wraps
+      ? (secsNow >= startS || secsNow < endS)
+      : (secsNow >= startS && secsNow < endS);
+
+    const card = document.getElementById('card-'+s.key);
+    const segs = document.querySelectorAll('.seg[data-key="'+s.key+'"]');
+    const stlbl = document.getElementById('stlbl-'+s.key);
+    const cd = document.getElementById('cd-'+s.key);
+
+    card.classList.toggle('live', isActive);
+    segs.forEach(seg => seg.classList.toggle('active', isActive));
+
+    if(isActive){
+      let remainS = wraps
+        ? (secsNow >= startS ? (86400 - secsNow + endS) : (endS - secsNow))
+        : (endS - secsNow);
+      stlbl.textContent = 'Live · closes in';
+      cd.textContent = fmtDur(remainS*1000);
+    } else {
+      let untilStartS = startS - secsNow;
+      if(untilStartS <= 0) untilStartS += 86400;
+      stlbl.textContent = 'Closed · opens in';
+      cd.textContent = fmtDur(untilStartS*1000);
+      if(untilStartS*1000 < soonestNextMs){
+        soonestNextMs = untilStartS*1000;
+        soonestNextName = s.name;
+      }
+    }
+  });
+
+  if(soonestNextName){
+    nextUpEl.innerHTML = `Next session: <b>${soonestNextName} — ${fmtDur(soonestNextMs)}</b>`;
+  } else {
+    nextUpEl.textContent = 'All sessions currently active';
+  }
+}
+
+buildTimeline();
+buildCards();
+tick();
+setInterval(tick, 1000);
+</script>
+
+</body>
+</html>
