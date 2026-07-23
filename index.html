@@ -312,6 +312,34 @@
   margin-bottom:24px;
 }
 #market-bias-app .mb-entry-form .mb-row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
+#market-bias-app .mb-paste-zone{
+  border:2px dashed var(--line);
+  border-radius:8px;
+  min-height:90px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:14px;
+  cursor:pointer;
+  color:var(--muted);
+  font-size:13px;
+  transition:border-color .15s, background .15s;
+}
+#market-bias-app .mb-paste-zone:hover,
+#market-bias-app .mb-paste-zone:focus{
+  border-color:var(--gold-dim);
+  outline:none;
+}
+#market-bias-app .mb-paste-zone.mb-paste-zone-drag{
+  border-color:var(--gold);
+  background:rgba(201,168,76,.06);
+}
+#market-bias-app .mb-paste-zone img{
+  max-width:100%;
+  max-height:220px;
+  border-radius:6px;
+}
 #market-bias-app .mb-entry-form .mb-row > *{flex:1;min-width:130px;}
 #market-bias-app .mb-entry-form label{
   display:block;
@@ -745,13 +773,20 @@
               </div>
             </div>
             <div class="mb-row">
-              <div>
+              <div style="flex:1 1 100%;">
                 <label>TradingView Link</label>
                 <input id="mb-tv-link-input" type="url" placeholder="https://www.tradingview.com/x/...">
               </div>
-              <div>
-                <label>Photo Link (chart screenshot URL)</label>
-                <input id="mb-img-link-input" type="url" placeholder="https://...">
+            </div>
+            <div class="mb-row">
+              <div style="flex:1 1 100%;">
+                <label>Chart Photo</label>
+                <div id="mb-img-paste-zone" class="mb-paste-zone" tabindex="0">
+                  <span id="mb-img-paste-hint">📋 এখানে ক্লিক করে Ctrl+V চাপুন — ছবি/স্ক্রিনশট পেস্ট করতে</span>
+                  <img id="mb-img-preview" alt="preview" style="display:none;">
+                </div>
+                <input id="mb-img-link-input" type="text" placeholder="...অথবা এখানে ছবির লিংক (URL) পেস্ট করুন" style="margin-top:8px;">
+                <div class="mb-status-msg" id="mb-img-paste-status"></div>
               </div>
             </div>
             <div class="mb-status-msg" id="mb-entry-status"></div>
@@ -1058,9 +1093,85 @@ loadReviews();
   function mbNormalizeUrl(url){
     if(!url) return '';
     const trimmed = url.trim();
+    if(/^data:/i.test(trimmed)) return trimmed;
     if(/^https?:\/\//i.test(trimmed)) return trimmed;
     return 'https://' + trimmed;
   }
+
+  function mbShowImgPreview(src){
+    const hint = document.getElementById('mb-img-paste-hint');
+    const preview = document.getElementById('mb-img-preview');
+    if(!hint || !preview) return;
+    if(src){
+      preview.src = src;
+      preview.style.display = 'block';
+      hint.style.display = 'none';
+    } else {
+      preview.src = '';
+      preview.style.display = 'none';
+      hint.style.display = 'block';
+    }
+  }
+
+  (function setupMbImagePaste(){
+    const zone = document.getElementById('mb-img-paste-zone');
+    const linkInput = document.getElementById('mb-img-link-input');
+    const statusEl = document.getElementById('mb-img-paste-status');
+    if(!zone) return;
+
+    function handleImageFile(file){
+      if(!file) return;
+      statusEl.textContent = 'ছবি প্রসেস হচ্ছে...';
+      const reader = new FileReader();
+      reader.onload = function(ev){
+        const img = new Image();
+        img.onload = function(){
+          const maxW = 1000;
+          const scale = Math.min(1, maxW / img.width);
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.round(img.width * scale);
+          canvas.height = Math.round(img.height * scale);
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+          linkInput.value = dataUrl;
+          mbShowImgPreview(dataUrl);
+          statusEl.textContent = 'ছবি যোগ হয়েছে — এবার নিচে Add Note চাপুন।';
+        };
+        img.onerror = function(){
+          statusEl.textContent = 'ছবিটা পড়া যায়নি, আবার চেষ্টা করুন।';
+        };
+        img.src = ev.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    zone.addEventListener('click', function(){ zone.focus(); });
+
+    zone.addEventListener('paste', function(e){
+      const items = (e.clipboardData || window.clipboardData) ? (e.clipboardData || window.clipboardData).items : null;
+      if(items){
+        for(let i=0;i<items.length;i++){
+          if(items[i].type && items[i].type.indexOf('image') !== -1){
+            e.preventDefault();
+            handleImageFile(items[i].getAsFile());
+            return;
+          }
+        }
+      }
+      statusEl.textContent = 'কোনো ছবি পাওয়া যায়নি — আগে ছবিটা কপি করুন, তারপর এখানে Ctrl+V চাপুন।';
+    });
+
+    zone.addEventListener('dragover', function(e){ e.preventDefault(); zone.classList.add('mb-paste-zone-drag'); });
+    zone.addEventListener('dragleave', function(){ zone.classList.remove('mb-paste-zone-drag'); });
+    zone.addEventListener('drop', function(e){
+      e.preventDefault();
+      zone.classList.remove('mb-paste-zone-drag');
+      if(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]){
+        handleImageFile(e.dataTransfer.files[0]);
+      }
+    });
+  })();
 
   function mbEscapeHtml(str){
     const div = document.createElement('div');
@@ -1214,7 +1325,12 @@ loadReviews();
       const bm = mbBiasMeta(e.bias);
       let linksHtml = '';
       if(e.tvLink) linksHtml += `<a href="${mbNormalizeUrl(e.tvLink)}" target="_blank" rel="noopener">TradingView Link ↗</a>`;
-      let imgHtml = e.imgUrl ? `<a href="${mbNormalizeUrl(e.imgUrl)}" target="_blank" rel="noopener"><img src="${e.imgUrl}" alt="chart"></a>` : '';
+      let imgHtml = '';
+      if(e.imgUrl){
+        imgHtml = /^data:/i.test(e.imgUrl)
+          ? `<img src="${e.imgUrl}" alt="chart">`
+          : `<a href="${mbNormalizeUrl(e.imgUrl)}" target="_blank" rel="noopener"><img src="${e.imgUrl}" alt="chart"></a>`;
+      }
       const actionsHtml = (mbIsAdmin && window.__azEditMode) ? `
           <div class="mb-entry-actions">
             <button data-edit-id="${mbEscapeHtml(e.id)}">Edit</button>
@@ -1293,6 +1409,7 @@ loadReviews();
     document.getElementById('mb-note-input').value = entry.note || '';
     document.getElementById('mb-tv-link-input').value = entry.tvLink || '';
     document.getElementById('mb-img-link-input').value = entry.imgUrl || '';
+    mbShowImgPreview(entry.imgUrl || '');
     document.getElementById('mb-entry-submit-btn').textContent = 'Update Note';
     document.getElementById('mb-entry-cancel-btn').style.display = 'inline-block';
     document.querySelector('#market-bias-app .mb-entry-form').scrollIntoView({behavior:'smooth', block:'start'});
@@ -1303,6 +1420,7 @@ loadReviews();
     document.getElementById('mb-note-input').value = '';
     document.getElementById('mb-tv-link-input').value = '';
     document.getElementById('mb-img-link-input').value = '';
+    mbShowImgPreview('');
     document.getElementById('mb-tf-select').value = 'Daily';
     document.querySelector('input[name="mb-bias"][value="up"]').checked = true;
     ['up','down','side'].forEach(b => document.getElementById('mb-bias-'+b+'-label').classList.remove('active'));
