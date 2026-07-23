@@ -244,6 +244,27 @@
 }
 #market-bias-app .mb-card.empty{color:var(--muted);cursor:default;text-align:center;font-size:13px;font-family:'DM Mono',monospace;}
 
+#market-bias-app .mb-card-del{
+  display:none;
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:24px;
+  height:24px;
+  border-radius:50%;
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--muted);
+  font-size:14px;
+  line-height:1;
+  padding:0;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+#market-bias-app.mb-is-admin .mb-card-del{display:flex;}
+#market-bias-app .mb-card-del:hover{color:var(--red);border-color:var(--red);background:rgba(224,82,82,0.1);}
+
 #market-bias-app .mb-candle{width:10px;height:16px;position:relative;display:inline-block;}
 #market-bias-app .mb-candle::before{content:'';position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:currentColor;transform:translateX(-50%);}
 #market-bias-app .mb-candle::after{content:'';position:absolute;left:0;right:0;top:4px;bottom:4px;background:currentColor;border-radius:1px;}
@@ -1262,6 +1283,7 @@ loadReviews();
       }
       cards.push(`
         <div class="mb-card" data-asset="${mbEscapeHtml(asset)}">
+          <button class="mb-card-del" data-del-asset="${mbEscapeHtml(asset)}" title="Delete asset">&times;</button>
           <div class="mb-asset-name">${asset}</div>
           ${inner}
         </div>
@@ -1273,6 +1295,8 @@ loadReviews();
   // Event delegation for card clicks — safer than inline onclick (works even
   // if the asset name has special characters, and isn't blocked by strict CSP).
   document.addEventListener('click', function(e){
+    const delAssetBtn = e.target.closest('[data-del-asset]');
+    if(delAssetBtn){ mbDeleteAsset(delAssetBtn.dataset.delAsset); return; }
     const card = e.target.closest('#mb-asset-grid .mb-card');
     if(card && card.dataset.asset) mbOpenAsset(card.dataset.asset);
     const editBtn = e.target.closest('[data-edit-id]');
@@ -1444,6 +1468,18 @@ loadReviews();
     }catch(e){ /* ignore */ }
   }
 
+  async function mbDeleteAsset(asset){
+    if(!mbIsAdmin || !window.__azEditMode) return;
+    if(!confirm(`Delete "${asset}" and all its bias notes? This can't be undone.`)) return;
+    try{
+      await window.db.collection('marketBias').doc(asset).delete();
+      if(mbCurrentAsset === asset) mbShowDashboard();
+    }catch(e){
+      console.error('Market Bias: could not delete asset:', e);
+      alert('Could not delete (' + (e && e.message ? e.message : 'unknown error') + ').');
+    }
+  }
+
   // expose for inline onclick handlers
   window.mbAddAsset = mbAddAsset;
   window.mbOpenAsset = mbOpenAsset;
@@ -1452,6 +1488,7 @@ loadReviews();
   window.mbStartEdit = mbStartEdit;
   window.mbCancelEdit = mbCancelEdit;
   window.mbDeleteEntry = mbDeleteEntry;
+  window.mbDeleteAsset = mbDeleteAsset;
 
   // ---------- Admin gating (mirrors trading_journal.html pattern) ----------
   function mbUpdateAdminUI(){

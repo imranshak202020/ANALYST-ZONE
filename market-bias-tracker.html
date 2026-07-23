@@ -140,6 +140,26 @@ h1{
 
 .card.empty{color:var(--text-dim);cursor:default;text-align:center;font-size:13px;font-family:'DM Mono',monospace;}
 
+.card .card-del{
+  position:absolute;
+  top:10px;
+  right:10px;
+  width:22px;
+  height:22px;
+  border-radius:50%;
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text-dim);
+  font-size:13px;
+  line-height:1;
+  padding:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+}
+.card .card-del:hover{color:var(--red);border-color:var(--red);background:rgba(224,82,82,0.1);}
+
 /* candle icon */
 .candle{width:10px;height:16px;position:relative;display:inline-block;}
 .candle::before{content:'';position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:currentColor;transform:translateX(-50%);}
@@ -469,6 +489,18 @@ async function saveEntries(asset, entries){
   }
 }
 
+async function deleteAsset(asset){
+  const ok = confirm(`Delete "${asset}" and all its bias notes? This can't be undone.`);
+  if(!ok) return;
+  const assets = await getAssets();
+  const filtered = assets.filter(a => a !== asset);
+  const saved = await saveAssets(filtered);
+  if(saved){
+    try{ await window.storage.delete('entries:'+asset, false); }catch(e){ /* nothing to delete, fine */ }
+    renderDashboard();
+  }
+}
+
 async function addAsset(){
   const input = document.getElementById('new-asset-input');
   const statusEl = document.getElementById('dash-status');
@@ -520,6 +552,7 @@ async function renderDashboard(){
     }
     cards.push(`
       <div class="card" onclick="openAsset('${asset}')">
+        <button class="card-del" title="Delete asset" onclick="event.stopPropagation(); deleteAsset('${asset}')">&times;</button>
         <div class="asset-name">${asset}</div>
         ${inner}
       </div>
