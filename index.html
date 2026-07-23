@@ -375,7 +375,7 @@
 #market-bias-app .mb-entry .mb-ts{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);}
 
 #market-bias-app .mb-empty-state{color:var(--muted);font-family:'DM Mono',monospace;font-size:13px;text-align:center;padding:30px 0;}
-#market-bias-app .mb-status-msg{font-size:12px;font-family:'DM Mono',monospace;color:var(--muted);margin-bottom:10px;min-height:16px;}
+#market-bias-app .mb-status-msg{font-size:13px;font-weight:600;font-family:'DM Mono',monospace;color:var(--gold);margin-bottom:10px;min-height:16px;}
 #market-bias-app .mb-admin-only{display:none;}
 #market-bias-app.mb-is-admin .mb-admin-only{display:inline-flex;}
 #market-bias-app.mb-is-admin .mb-add-asset-row.mb-admin-only{display:flex;}
@@ -1092,7 +1092,7 @@ loadReviews();
     const input = document.getElementById('new-asset-input');
     const statusEl = document.getElementById('mb-dash-status');
     const name = input.value.trim().toUpperCase();
-    if(!name){ return; }
+    if(!name){ statusEl.textContent = 'Please type an asset name first.'; return; }
     if(!mbIsAdmin || !window.__azEditMode){ statusEl.textContent = 'Enable Edit Mode first from the admin panel.'; return; }
     if(mbAssets[name]){
       statusEl.textContent = 'This asset is already added.';
@@ -1107,7 +1107,8 @@ loadReviews();
       });
       statusEl.textContent = '';
     }catch(e){
-      statusEl.textContent = 'Could not save, please try again.';
+      console.error('Market Bias: could not save new asset:', e);
+      statusEl.textContent = 'Could not save (' + (e && e.message ? e.message : 'unknown error') + ').';
     }
     input.value='';
   }
@@ -1264,7 +1265,8 @@ loadReviews();
       statusEl.textContent = '';
       mbCancelEdit();
     }catch(e){
-      statusEl.textContent = 'Could not save, please try again.';
+      console.error('Market Bias: could not save entry:', e);
+      statusEl.textContent = 'Could not save (' + (e && e.message ? e.message : 'unknown error') + ').';
     }
   }
 
