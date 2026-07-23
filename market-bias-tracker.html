@@ -116,12 +116,12 @@ h1{
   align-items:center;
   font-family:'DM Mono',monospace;
   font-size:11.5px;
-  font-weight:600;
+  font-weight:700;
   letter-spacing:0.4px;
   text-transform:uppercase;
-  color:var(--text);
-  background:rgba(233,230,218,0.12);
-  border:1px solid rgba(233,230,218,0.35);
+  color:#0d0f14;
+  background:#f4f2ea;
+  border:1px solid #f4f2ea;
   border-radius:5px;
   padding:2px 8px;
 }
@@ -216,6 +216,33 @@ button.ghost:hover{color:var(--text);border-color:var(--gold-dim);}
   border-radius:10px;
   padding:18px;
   margin-bottom:24px;
+  display:none;
+}
+.entry-form.open{ display:block; }
+.add-bias-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:100%;
+  padding:12px;
+  margin-bottom:18px;
+  background:var(--gold);
+  color:#0d0f14;
+  border:none;
+  border-radius:10px;
+  font-family:'DM Mono',monospace;
+  font-weight:700;
+  font-size:13.5px;
+  letter-spacing:0.3px;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+.add-bias-btn:hover{ filter:brightness(1.08); }
+.add-bias-btn.is-open{
+  background:transparent;
+  border:1px solid var(--border);
+  color:var(--text-dim);
 }
 .entry-form .row{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:10px;}
 .entry-form .row > *{flex:1;min-width:130px;}
@@ -264,12 +291,12 @@ button.ghost:hover{color:var(--text);border-color:var(--gold-dim);}
 .entry .tf{
   font-family:'DM Mono',monospace;
   font-size:11.5px;
-  font-weight:600;
+  font-weight:700;
   letter-spacing:0.4px;
   text-transform:uppercase;
-  color:var(--text);
-  background:rgba(233,230,218,0.12);
-  border:1px solid rgba(233,230,218,0.35);
+  color:#0d0f14;
+  background:#f4f2ea;
+  border:1px solid #f4f2ea;
   border-radius:5px;
   padding:2px 8px;
 }
@@ -327,7 +354,9 @@ button.ghost:hover{color:var(--text);border-color:var(--gold-dim);}
       <span id="detail-latest-badge"></span>
     </div>
 
-    <div class="entry-form">
+    <button class="add-bias-btn" id="add-entry-toggle-btn" onclick="toggleEntryForm()">+ Add Bias Note</button>
+
+    <div class="entry-form" id="entry-form-box">
       <div class="row">
         <div>
           <label>Timeframe</label>
@@ -519,6 +548,7 @@ function openAsset(asset){
   document.getElementById('detail-view').style.display = 'block';
   document.getElementById('detail-asset-name').textContent = asset;
   updateBiasChoiceStyles();
+  closeEntryForm();
   renderHistory();
 }
 
@@ -619,6 +649,31 @@ async function addEntry(){
   renderHistory();
 }
 
+function openEntryForm(){
+  document.getElementById('entry-form-box').classList.add('open');
+  const btn = document.getElementById('add-entry-toggle-btn');
+  btn.textContent = '− Close';
+  btn.classList.add('is-open');
+}
+
+function closeEntryForm(){
+  document.getElementById('entry-form-box').classList.remove('open');
+  const btn = document.getElementById('add-entry-toggle-btn');
+  btn.textContent = '+ Add Bias Note';
+  btn.classList.remove('is-open');
+}
+
+function toggleEntryForm(){
+  const box = document.getElementById('entry-form-box');
+  if(box.classList.contains('open')){
+    if(editingId) cancelEdit();
+    closeEntryForm();
+  } else {
+    openEntryForm();
+    box.scrollIntoView({behavior:'smooth', block:'start'});
+  }
+}
+
 async function startEdit(id){
   const entries = await getEntries(currentAsset);
   const entry = entries.find(e => e.id === id);
@@ -633,7 +688,8 @@ async function startEdit(id){
   document.getElementById('img-link-input').value = entry.imgUrl || '';
   document.getElementById('entry-submit-btn').textContent = 'Update Note';
   document.getElementById('entry-cancel-btn').style.display = 'inline-block';
-  document.querySelector('.entry-form').scrollIntoView({behavior:'smooth', block:'start'});
+  openEntryForm();
+  document.getElementById('entry-form-box').scrollIntoView({behavior:'smooth', block:'start'});
 }
 
 function cancelEdit(){
@@ -648,6 +704,7 @@ function cancelEdit(){
   document.getElementById('entry-submit-btn').textContent = 'Add Note';
   document.getElementById('entry-cancel-btn').style.display = 'none';
   document.getElementById('entry-status').textContent = '';
+  closeEntryForm();
 }
 
 async function deleteEntry(id){
