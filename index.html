@@ -752,10 +752,12 @@
                   <option>1m</option>
                   <option>5m</option>
                   <option>15m</option>
+                  <option>30m</option>
                   <option>1H</option>
                   <option>4H</option>
                   <option selected>Daily</option>
                   <option>Weekly</option>
+                  <option>Month</option>
                 </select>
               </div>
             </div>
@@ -1663,6 +1665,11 @@ loadReviews();
     if(e.key === 'Escape') closeModal();
   });
 
+  // If we arrived here from another page's "Market Session" link, open the popup automatically
+  if(location.hash === '#open-market-session'){
+    openModal();
+  }
+
   // ---- Market Bias modal open/close wiring ----
   const mbModal = document.getElementById('market-bias-modal');
   const mbTriggers = document.querySelectorAll('.market-bias-trigger');
@@ -1686,6 +1693,11 @@ loadReviews();
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape') closeMbModal();
   });
+
+  // If we arrived here from another page's "Market Bias" link, open the popup automatically
+  if(location.hash === '#open-market-bias'){
+    openMbModal();
+  }
 })();
 </script>
 
