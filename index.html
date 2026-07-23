@@ -77,7 +77,6 @@
 
   /* ---------- SECTION HEADERS ---------- */
   .section{padding:56px 0;}
-  #market-bias{padding-top:32px;}
   .section-head{text-align:center;max-width:600px;margin:0 auto 44px;}
   .section-head .eyebrow-sm{font-family:var(--mono);font-size:11px;color:var(--gold);letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;}
   .section-head h2{font-size:clamp(24px,4vw,34px);margin:0 0 12px;font-weight:800;letter-spacing:-.5px;}
@@ -618,7 +617,7 @@
     </a>
     <div class="navlinks">
       <a href="#" id="market-session-nav-link">Market Session</a>
-      <a href="#market-bias">Market Bias</a>
+      <a href="#" class="market-bias-trigger">Market Bias</a>
       <a href="#offerings">Programs</a>
       <a href="trading_journal.html">Journal</a>
       <div class="join-dropdown">
@@ -680,81 +679,84 @@
   </div>
 </div>
 
-<section class="section wrap" id="market-bias">
-  <div id="market-bias-app">
-    <div class="mb-wrap">
+<div id="market-bias-modal" class="st-modal-overlay">
+  <div class="st-modal-box">
+    <span class="st-modal-close" id="mb-modal-close">&times;</span>
+    <div id="market-bias-app">
+      <div class="mb-wrap">
 
-      <div class="mb-viewer-note" id="mb-viewer-note" style="display:none;">Viewing live — only admin can add or edit notes.</div>
+        <div class="mb-viewer-note" id="mb-viewer-note" style="display:none;">Viewing live — only admin can add or edit notes.</div>
 
-      <!-- DASHBOARD -->
-      <div id="dashboard-view">
-        <div class="mb-add-asset-row mb-admin-only">
-          <input id="new-asset-input" type="text" placeholder="Add a new asset (e.g. BTC, XAUUSD, EURUSD)">
-          <button onclick="mbAddAsset()">+ Add</button>
+        <!-- DASHBOARD -->
+        <div id="dashboard-view">
+          <div class="mb-add-asset-row mb-admin-only">
+            <input id="new-asset-input" type="text" placeholder="Add a new asset (e.g. BTC, XAUUSD, EURUSD)">
+            <button onclick="mbAddAsset()">+ Add</button>
+          </div>
+          <div class="mb-status-msg" id="mb-dash-status"></div>
+          <div class="mb-grid" id="mb-asset-grid"></div>
         </div>
-        <div class="mb-status-msg" id="mb-dash-status"></div>
-        <div class="mb-grid" id="mb-asset-grid"></div>
+
+        <!-- DETAIL -->
+        <div id="detail-view">
+          <button class="ghost mb-back-btn" onclick="mbShowDashboard()">← All Assets</button>
+          <div class="mb-detail-header">
+            <h2 id="mb-detail-asset-name"></h2>
+            <span id="mb-detail-latest-badge"></span>
+          </div>
+
+          <div class="mb-entry-form mb-admin-only">
+            <div class="mb-row">
+              <div>
+                <label>Timeframe</label>
+                <select id="mb-tf-select">
+                  <option>1m</option>
+                  <option>5m</option>
+                  <option>15m</option>
+                  <option>1H</option>
+                  <option>4H</option>
+                  <option selected>Daily</option>
+                  <option>Weekly</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-row">
+              <div class="mb-bias-choice">
+                <label class="up" id="mb-bias-up-label"><input type="radio" name="mb-bias" value="up" checked><span>▲ Bullish</span></label>
+                <label class="down" id="mb-bias-down-label"><input type="radio" name="mb-bias" value="down"><span>▼ Bearish</span></label>
+                <label class="side" id="mb-bias-side-label"><input type="radio" name="mb-bias" value="side"><span>◆ Consolidation</span></label>
+              </div>
+            </div>
+            <div class="mb-row">
+              <div style="flex:1 1 100%;">
+                <label>Note (why this bias — what happened on the candle)</label>
+                <textarea id="mb-note-input" placeholder="e.g. Reaction from a bullish OB on Daily, CHoCH confirmed..."></textarea>
+              </div>
+            </div>
+            <div class="mb-row">
+              <div>
+                <label>TradingView Link</label>
+                <input id="mb-tv-link-input" type="url" placeholder="https://www.tradingview.com/x/...">
+              </div>
+              <div>
+                <label>Photo Link (chart screenshot URL)</label>
+                <input id="mb-img-link-input" type="url" placeholder="https://...">
+              </div>
+            </div>
+            <div class="mb-status-msg" id="mb-entry-status"></div>
+            <div style="display:flex;gap:8px;">
+              <button onclick="mbAddEntry()" id="mb-entry-submit-btn">Add Note</button>
+              <button class="ghost" onclick="mbCancelEdit()" id="mb-entry-cancel-btn" style="display:none;">Cancel</button>
+            </div>
+          </div>
+
+          <div class="mb-history" id="mb-history-list"></div>
+        </div>
+
       </div>
-
-      <!-- DETAIL -->
-      <div id="detail-view">
-        <button class="ghost mb-back-btn" onclick="mbShowDashboard()">← All Assets</button>
-        <div class="mb-detail-header">
-          <h2 id="mb-detail-asset-name"></h2>
-          <span id="mb-detail-latest-badge"></span>
-        </div>
-
-        <div class="mb-entry-form mb-admin-only">
-          <div class="mb-row">
-            <div>
-              <label>Timeframe</label>
-              <select id="mb-tf-select">
-                <option>1m</option>
-                <option>5m</option>
-                <option>15m</option>
-                <option>1H</option>
-                <option>4H</option>
-                <option selected>Daily</option>
-                <option>Weekly</option>
-              </select>
-            </div>
-          </div>
-          <div class="mb-row">
-            <div class="mb-bias-choice">
-              <label class="up" id="mb-bias-up-label"><input type="radio" name="mb-bias" value="up" checked><span>▲ Bullish</span></label>
-              <label class="down" id="mb-bias-down-label"><input type="radio" name="mb-bias" value="down"><span>▼ Bearish</span></label>
-              <label class="side" id="mb-bias-side-label"><input type="radio" name="mb-bias" value="side"><span>◆ Consolidation</span></label>
-            </div>
-          </div>
-          <div class="mb-row">
-            <div style="flex:1 1 100%;">
-              <label>Note (why this bias — what happened on the candle)</label>
-              <textarea id="mb-note-input" placeholder="e.g. Reaction from a bullish OB on Daily, CHoCH confirmed..."></textarea>
-            </div>
-          </div>
-          <div class="mb-row">
-            <div>
-              <label>TradingView Link</label>
-              <input id="mb-tv-link-input" type="url" placeholder="https://www.tradingview.com/x/...">
-            </div>
-            <div>
-              <label>Photo Link (chart screenshot URL)</label>
-              <input id="mb-img-link-input" type="url" placeholder="https://...">
-            </div>
-          </div>
-          <div class="mb-status-msg" id="mb-entry-status"></div>
-          <div style="display:flex;gap:8px;">
-            <button onclick="mbAddEntry()" id="mb-entry-submit-btn">Add Note</button>
-            <button class="ghost" onclick="mbCancelEdit()" id="mb-entry-cancel-btn" style="display:none;">Cancel</button>
-          </div>
-        </div>
-
-        <div class="mb-history" id="mb-history-list"></div>
-      </div>
-
     </div>
   </div>
-</section>
+</div>
 
 
 <section class="section wrap" id="offerings">
@@ -777,7 +779,7 @@
       <div class="tag">Daily Outlook</div>
       <h3>Market <em>Bias</em></h3>
       <p>Live bias & reasoning on BTC, ETH, Gold, and currency pairs — updated by our team, with full history on each asset.</p>
-      <a class="link" href="#market-bias">Check Bias →</a>
+      <a class="link market-bias-trigger" href="#">Check Bias →</a>
     </div>
     <div class="offer-card">
       <div class="idx">03</div>
@@ -1528,6 +1530,30 @@ loadReviews();
   }
   document.addEventListener('keydown', (e) => {
     if(e.key === 'Escape') closeModal();
+  });
+
+  // ---- Market Bias modal open/close wiring ----
+  const mbModal = document.getElementById('market-bias-modal');
+  const mbTriggers = document.querySelectorAll('.market-bias-trigger');
+  const mbCloseBtn = document.getElementById('mb-modal-close');
+
+  function openMbModal(e){
+    if(e) e.preventDefault();
+    if(mbModal) mbModal.classList.add('open');
+  }
+  function closeMbModal(){
+    if(mbModal) mbModal.classList.remove('open');
+  }
+
+  mbTriggers.forEach(el => el.addEventListener('click', openMbModal));
+  if(mbCloseBtn) mbCloseBtn.addEventListener('click', closeMbModal);
+  if(mbModal){
+    mbModal.addEventListener('click', (e) => {
+      if(e.target === mbModal) closeMbModal(); // click on dark backdrop
+    });
+  }
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'Escape') closeMbModal();
   });
 })();
 </script>
