@@ -269,7 +269,18 @@
 #market-bias-app .mb-candle::before{content:'';position:absolute;left:50%;top:-3px;bottom:-3px;width:1px;background:currentColor;transform:translateX(-50%);}
 #market-bias-app .mb-candle::after{content:'';position:absolute;left:0;right:0;top:4px;bottom:4px;background:currentColor;border-radius:1px;}
 
-#market-bias-app .mb-add-asset-row{display:flex;gap:8px;margin-bottom:22px;}
+#market-bias-app .mb-add-asset-row{display:flex;gap:8px;margin-bottom:14px;}
+#market-bias-app .mb-search-row{display:flex;gap:8px;margin-bottom:22px;position:relative;}
+#market-bias-app .mb-search-row input{flex:1;padding-left:34px;}
+#market-bias-app .mb-search-row .mb-search-icon{
+  position:absolute;
+  left:11px;
+  top:50%;
+  transform:translateY(-50%);
+  color:var(--muted);
+  font-size:14px;
+  pointer-events:none;
+}
 #market-bias-app input,
 #market-bias-app select,
 #market-bias-app textarea{
@@ -428,7 +439,34 @@
 #market-bias-app .mb-admin-only{display:none;}
 #market-bias-app.mb-is-admin .mb-admin-only{display:inline-flex;}
 #market-bias-app.mb-is-admin .mb-add-asset-row.mb-admin-only{display:flex;}
-#market-bias-app.mb-is-admin .mb-entry-form.mb-admin-only{display:block;}
+#market-bias-app .mb-entry-form{display:none;}
+#market-bias-app.mb-is-admin .mb-entry-form.mb-admin-only.mb-open{display:block;}
+#market-bias-app .mb-add-bias-btn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  width:100%;
+  padding:12px;
+  margin-bottom:18px;
+  background:var(--gold);
+  color:#0d0f14;
+  border:none;
+  border-radius:10px;
+  font-family:'DM Mono',monospace;
+  font-weight:700;
+  font-size:13.5px;
+  letter-spacing:0.3px;
+  text-transform:uppercase;
+  cursor:pointer;
+}
+#market-bias-app .mb-add-bias-btn:hover{filter:brightness(1.08);}
+#market-bias-app.mb-is-admin .mb-add-bias-btn.mb-admin-only{display:flex;}
+#market-bias-app .mb-add-bias-btn.mb-is-open{
+  background:transparent;
+  border:1px solid var(--line);
+  color:var(--muted);
+}
 #market-bias-app .mb-viewer-note{font-family:'DM Mono',monospace;font-size:12px;color:var(--muted);margin-bottom:16px;}
 
 /* ===== Market Session Tracker (scoped under #session-tracker-widget) ===== */
@@ -754,6 +792,10 @@
             <button onclick="mbAddAsset()">+ Add</button>
           </div>
           <div class="mb-status-msg" id="mb-dash-status"></div>
+          <div class="mb-search-row">
+            <span class="mb-search-icon">&#128269;</span>
+            <input id="mb-asset-search-input" type="text" placeholder="Search assets (e.g. US30, NZDUSD...)">
+          </div>
           <div class="mb-grid" id="mb-asset-grid"></div>
         </div>
 
@@ -765,7 +807,9 @@
             <span id="mb-detail-latest-badge"></span>
           </div>
 
-          <div class="mb-entry-form mb-admin-only">
+          <button class="mb-add-bias-btn mb-admin-only" id="mb-add-entry-toggle-btn" onclick="mbToggleEntryForm()">+ Add Bias Note</button>
+
+          <div class="mb-entry-form mb-admin-only" id="mb-entry-form-box">
             <div class="mb-row">
               <div>
                 <label>Timeframe</label>
@@ -1261,9 +1305,16 @@ loadReviews();
   function mbRenderDashboard(){
     const grid = document.getElementById('mb-asset-grid');
     if(!grid) return;
-    const names = mbGetAssetNames();
-    if(names.length === 0){
+    const allNames = mbGetAssetNames();
+    if(allNames.length === 0){
       grid.innerHTML = '<div class="mb-card empty">No assets added yet.<br>Add one above.</div>';
+      return;
+    }
+    const searchEl = document.getElementById('mb-asset-search-input');
+    const q = searchEl ? searchEl.value.trim().toUpperCase() : '';
+    const names = q ? allNames.filter(a => a.includes(q)) : allNames;
+    if(names.length === 0){
+      grid.innerHTML = '<div class="mb-card empty">No assets match your search.</div>';
       return;
     }
     const cards = [];
@@ -1312,6 +1363,7 @@ loadReviews();
     document.getElementById('detail-view').style.display = 'block';
     document.getElementById('mb-detail-asset-name').textContent = asset;
     mbUpdateBiasChoiceStyles();
+    mbCloseEntryForm();
     mbRenderHistory();
   }
 
@@ -1320,6 +1372,36 @@ loadReviews();
     document.getElementById('detail-view').style.display = 'none';
     document.getElementById('dashboard-view').style.display = 'block';
     mbRenderDashboard();
+  }
+
+  document.addEventListener('input', function(e){
+    if(e.target && e.target.id === 'mb-asset-search-input') mbRenderDashboard();
+  });
+
+  function mbOpenEntryForm(){
+    const box = document.getElementById('mb-entry-form-box');
+    const btn = document.getElementById('mb-add-entry-toggle-btn');
+    if(box) box.classList.add('mb-open');
+    if(btn){ btn.textContent = '− Close'; btn.classList.add('mb-is-open'); }
+  }
+
+  function mbCloseEntryForm(){
+    const box = document.getElementById('mb-entry-form-box');
+    const btn = document.getElementById('mb-add-entry-toggle-btn');
+    if(box) box.classList.remove('mb-open');
+    if(btn){ btn.textContent = '+ Add Bias Note'; btn.classList.remove('mb-is-open'); }
+  }
+
+  function mbToggleEntryForm(){
+    const box = document.getElementById('mb-entry-form-box');
+    if(!box) return;
+    if(box.classList.contains('mb-open')){
+      if(mbEditingId) mbCancelEdit();
+      mbCloseEntryForm();
+    } else {
+      mbOpenEntryForm();
+      box.scrollIntoView({behavior:'smooth', block:'start'});
+    }
   }
 
   function mbUpdateBiasChoiceStyles(){
@@ -1438,6 +1520,7 @@ loadReviews();
     mbShowImgPreview(entry.imgUrl || '');
     document.getElementById('mb-entry-submit-btn').textContent = 'Update Note';
     document.getElementById('mb-entry-cancel-btn').style.display = 'inline-block';
+    mbOpenEntryForm();
     document.querySelector('#market-bias-app .mb-entry-form').scrollIntoView({behavior:'smooth', block:'start'});
   }
 
@@ -1454,6 +1537,7 @@ loadReviews();
     document.getElementById('mb-entry-submit-btn').textContent = 'Add Note';
     document.getElementById('mb-entry-cancel-btn').style.display = 'none';
     document.getElementById('mb-entry-status').textContent = '';
+    mbCloseEntryForm();
   }
 
   async function mbDeleteEntry(id){
