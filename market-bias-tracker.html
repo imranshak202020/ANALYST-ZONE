@@ -257,6 +257,25 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
 }
 #market-bias-app .mb-entry-form textarea{width:100%;min-height:70px;resize:vertical;font-family:'Noto Sans Bengali','Crimson Pro',serif;}
 #market-bias-app .mb-bias-choice{display:flex;gap:8px;}
+#market-bias-app .mb-tf-choice{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px;}
+#market-bias-app .mb-tf-choice input{display:none;}
+#market-bias-app .mb-tf-choice label{
+  padding:7px 13px;
+  border:1px solid var(--line);
+  border-radius:7px;
+  font-family:'DM Mono',monospace;
+  font-size:12.5px;
+  color:var(--muted);
+  cursor:pointer;
+  transition:background .12s, border-color .12s, color .12s;
+}
+#market-bias-app .mb-tf-choice label:hover{border-color:var(--gold-dim);}
+#market-bias-app .mb-tf-choice label.active{
+  background:#f2f0e9;
+  border-color:#f2f0e9;
+  color:#0d0f14;
+  font-weight:700;
+}
 #market-bias-app .mb-bias-choice label{
   flex:1;
   display:flex;
@@ -386,17 +405,17 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
             <div class="mb-row">
               <div>
                 <label>Timeframe</label>
-                <select id="mb-tf-select">
-                  <option>1m</option>
-                  <option>5m</option>
-                  <option>15m</option>
-                  <option>30m</option>
-                  <option>1H</option>
-                  <option>4H</option>
-                  <option selected>Daily</option>
-                  <option>Weekly</option>
-                  <option>Month</option>
-                </select>
+                <div class="mb-tf-choice" id="mb-tf-choice">
+                  <label data-val="1m"><input type="radio" name="mb-tf" value="1m"><span>1m</span></label>
+                  <label data-val="5m"><input type="radio" name="mb-tf" value="5m"><span>5m</span></label>
+                  <label data-val="15m"><input type="radio" name="mb-tf" value="15m"><span>15m</span></label>
+                  <label data-val="30m"><input type="radio" name="mb-tf" value="30m"><span>30m</span></label>
+                  <label data-val="1H"><input type="radio" name="mb-tf" value="1H"><span>1H</span></label>
+                  <label data-val="4H"><input type="radio" name="mb-tf" value="4H"><span>4H</span></label>
+                  <label class="active" data-val="Daily"><input type="radio" name="mb-tf" value="Daily" checked><span>Daily</span></label>
+                  <label data-val="Weekly"><input type="radio" name="mb-tf" value="Weekly"><span>Weekly</span></label>
+                  <label data-val="Month"><input type="radio" name="mb-tf" value="Month"><span>Month</span></label>
+                </div>
               </div>
             </div>
             <div class="mb-row">
@@ -732,6 +751,13 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
       });
     });
     document.getElementById('mb-bias-up-label').classList.add('active');
+
+    document.querySelectorAll('input[name="mb-tf"]').forEach(r=>{
+      r.addEventListener('change', ()=>{
+        document.querySelectorAll('#market-bias-app .mb-tf-choice label').forEach(l => l.classList.remove('active'));
+        document.querySelector(`#market-bias-app .mb-tf-choice label[data-val="${r.value}"]`).classList.add('active');
+      });
+    });
   }
 
   function mbRenderHistory(){
@@ -783,7 +809,7 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
   async function mbAddEntry(){
     const statusEl = document.getElementById('mb-entry-status');
     if(!mbIsAdmin || !window.__azEditMode){ statusEl.textContent = 'Enable Edit Mode first from the admin panel.'; return; }
-    const timeframe = document.getElementById('mb-tf-select').value;
+    const timeframe = document.querySelector('input[name="mb-tf"]:checked').value;
     const bias = document.querySelector('input[name="mb-bias"]:checked').value;
     const note = document.getElementById('mb-note-input').value.trim();
     const tvLink = document.getElementById('mb-tv-link-input').value.trim();
@@ -828,7 +854,11 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
     const entry = entries.find(e => e.id === id);
     if(!entry) return;
     mbEditingId = id;
-    document.getElementById('mb-tf-select').value = entry.timeframe;
+    const tfInput = document.querySelector(`input[name="mb-tf"][value="${entry.timeframe}"]`);
+    if(tfInput) tfInput.checked = true;
+    document.querySelectorAll('#market-bias-app .mb-tf-choice label').forEach(l => l.classList.remove('active'));
+    const tfLabel = document.querySelector(`#market-bias-app .mb-tf-choice label[data-val="${entry.timeframe}"]`);
+    if(tfLabel) tfLabel.classList.add('active');
     document.querySelector(`input[name="mb-bias"][value="${entry.bias}"]`).checked = true;
     ['up','down','side'].forEach(b => document.getElementById('mb-bias-'+b+'-label').classList.remove('active'));
     document.getElementById('mb-bias-'+entry.bias+'-label').classList.add('active');
@@ -848,7 +878,9 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
     document.getElementById('mb-tv-link-input').value = '';
     document.getElementById('mb-img-link-input').value = '';
     mbShowImgPreview('');
-    document.getElementById('mb-tf-select').value = 'Daily';
+    document.querySelector('input[name="mb-tf"][value="Daily"]').checked = true;
+    document.querySelectorAll('#market-bias-app .mb-tf-choice label').forEach(l => l.classList.remove('active'));
+    document.querySelector('#market-bias-app .mb-tf-choice label[data-val="Daily"]').classList.add('active');
     document.querySelector('input[name="mb-bias"][value="up"]').checked = true;
     ['up','down','side'].forEach(b => document.getElementById('mb-bias-'+b+'-label').classList.remove('active'));
     document.getElementById('mb-bias-up-label').classList.add('active');
