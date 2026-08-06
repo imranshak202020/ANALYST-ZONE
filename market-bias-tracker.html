@@ -546,9 +546,9 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
     IDR:'id', PHP:'ph', CZK:'cz', HUF:'hu', ILS:'il', SAR:'sa', AED:'ae'
   };
   const MB_SYMBOL_OVERRIDE = {
-    XAUUSD:{t:'emoji', v:'🥇', bg:'#4a3c1a'}, GOLD:{t:'emoji', v:'🥇', bg:'#4a3c1a'},
-    XAGUSD:{t:'emoji', v:'🥈', bg:'#33363c'}, SILVER:{t:'emoji', v:'🥈', bg:'#33363c'},
-    XCUUSD:{t:'emoji', v:'🟠', bg:'#4a2c1a'}, COPPER:{t:'emoji', v:'🟠', bg:'#4a2c1a'},
+    XAUUSD:{t:'emoji', v:'🥇', bg:'#4a3c1a'}, GOLD:{t:'emoji', v:'🥇', bg:'#4a3c1a'}, XAU:{t:'emoji', v:'🥇', bg:'#4a3c1a'},
+    XAGUSD:{t:'emoji', v:'🥈', bg:'#33363c'}, SILVER:{t:'emoji', v:'🥈', bg:'#33363c'}, XAG:{t:'emoji', v:'🥈', bg:'#33363c'},
+    XCUUSD:{t:'emoji', v:'🟠', bg:'#4a2c1a'}, COPPER:{t:'emoji', v:'🟠', bg:'#4a2c1a'}, XCU:{t:'emoji', v:'🟠', bg:'#4a2c1a'},
     USOIL:{t:'emoji', v:'🛢️', bg:'#3a2c18'}, UKOIL:{t:'emoji', v:'🛢️', bg:'#3a2c18'},
     WTI:{t:'emoji', v:'🛢️', bg:'#3a2c18'}, BRENT:{t:'emoji', v:'🛢️', bg:'#3a2c18'},
     NATGAS:{t:'emoji', v:'🔥', bg:'#3a2c18'},
@@ -570,10 +570,10 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
   const MB_FB_COLORS = ['#c9a84c','#4ecb71','#e05252','#5b8def','#c56be0','#e0a052'];
 
   function mbFlagUrl(code){
-    return `https://cdn.jsdelivr.net/gh/HatScripts/circle-flags/flags/${code}.svg`;
+    return `https://flagcdn.com/w80/${code}.png`;
   }
   function mbCryptoUrl(code){
-    return `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/svg/color/${code}.svg`;
+    return `https://assets.coincap.io/assets/icons/${code}@2x.png`;
   }
   function mbFbColor(name){
     let h = 0;
