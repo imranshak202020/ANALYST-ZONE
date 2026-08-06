@@ -84,7 +84,61 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
   font-weight:600;
   color:var(--text);
   margin-bottom:8px;
+  display:flex;
+  align-items:center;
+  gap:9px;
 }
+/* ===== Auto asset icon (flag pair / crypto / commodity / fallback) ===== */
+#market-bias-app .mb-icon{
+  position:relative;
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  width:26px;
+  height:26px;
+  flex:0 0 auto;
+}
+#market-bias-app .mb-icon img{
+  width:100%;
+  height:100%;
+  border-radius:50%;
+  object-fit:cover;
+  display:block;
+  background:#1a1e28;
+}
+#market-bias-app .mb-icon-pair{
+  width:34px;
+}
+#market-bias-app .mb-icon-pair img{
+  position:absolute;
+  width:20px;
+  height:20px;
+  border:2px solid var(--panel);
+  box-sizing:content-box;
+}
+#market-bias-app .mb-icon-pair img:first-child{ left:0; top:0; z-index:2; }
+#market-bias-app .mb-icon-pair img:last-child{ left:13px; top:7px; z-index:1; }
+#market-bias-app .mb-icon-emoji,
+#market-bias-app .mb-icon-fb{
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:13px;
+  font-family:'DM Mono',monospace;
+  font-weight:700;
+  color:#0d0f14;
+  flex:0 0 auto;
+}
+#market-bias-app .mb-detail-header .mb-icon-pair{ width:40px; height:30px; }
+#market-bias-app .mb-detail-header .mb-icon-pair img{ width:24px; height:24px; }
+#market-bias-app .mb-detail-header .mb-icon-pair img:last-child{ left:15px; top:8px; }
+#market-bias-app .mb-detail-header .mb-icon:not(.mb-icon-pair),
+#market-bias-app .mb-detail-header .mb-icon-emoji,
+#market-bias-app .mb-detail-header .mb-icon-fb{ width:32px; height:32px; font-size:15px; }
+#market-bias-app .mb-detail-header h2{ display:flex; align-items:center; gap:10px; }
 #market-bias-app .mb-badge{
   display:inline-flex;
   align-items:center;
@@ -482,6 +536,94 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
   let mbIsAdmin = false;
   let mbSubscribed = false;
 
+  // ---------- Auto asset icon (TradingView-style) ----------
+  // Works purely from the asset's name — no manual upload needed, so it
+  // applies automatically to every asset already added AND any new one.
+  const MB_CCY_FLAG = {
+    USD:'us', EUR:'eu', GBP:'gb', JPY:'jp', CHF:'ch', CAD:'ca', AUD:'au', NZD:'nz',
+    CNY:'cn', CNH:'cn', HKD:'hk', SGD:'sg', ZAR:'za', TRY:'tr', MXN:'mx', SEK:'se',
+    NOK:'no', DKK:'dk', PLN:'pl', INR:'in', RUB:'ru', KRW:'kr', BRL:'br', THB:'th',
+    IDR:'id', PHP:'ph', CZK:'cz', HUF:'hu', ILS:'il', SAR:'sa', AED:'ae'
+  };
+  const MB_SYMBOL_OVERRIDE = {
+    XAUUSD:{t:'emoji', v:'🥇', bg:'#4a3c1a'}, GOLD:{t:'emoji', v:'🥇', bg:'#4a3c1a'},
+    XAGUSD:{t:'emoji', v:'🥈', bg:'#33363c'}, SILVER:{t:'emoji', v:'🥈', bg:'#33363c'},
+    XCUUSD:{t:'emoji', v:'🟠', bg:'#4a2c1a'}, COPPER:{t:'emoji', v:'🟠', bg:'#4a2c1a'},
+    USOIL:{t:'emoji', v:'🛢️', bg:'#3a2c18'}, UKOIL:{t:'emoji', v:'🛢️', bg:'#3a2c18'},
+    WTI:{t:'emoji', v:'🛢️', bg:'#3a2c18'}, BRENT:{t:'emoji', v:'🛢️', bg:'#3a2c18'},
+    NATGAS:{t:'emoji', v:'🔥', bg:'#3a2c18'},
+    BTC:{t:'crypto', v:'btc'}, BTCUSD:{t:'crypto', v:'btc'}, XBTUSD:{t:'crypto', v:'btc'},
+    ETH:{t:'crypto', v:'eth'}, ETHUSD:{t:'crypto', v:'eth'},
+    XRP:{t:'crypto', v:'xrp'}, XRPUSD:{t:'crypto', v:'xrp'},
+    LTC:{t:'crypto', v:'ltc'}, LTCUSD:{t:'crypto', v:'ltc'},
+    SOL:{t:'crypto', v:'sol'}, SOLUSD:{t:'crypto', v:'sol'},
+    BNB:{t:'crypto', v:'bnb'}, BNBUSD:{t:'crypto', v:'bnb'},
+    DOGE:{t:'crypto', v:'doge'}, DOGEUSD:{t:'crypto', v:'doge'},
+    ADA:{t:'crypto', v:'ada'}, ADAUSD:{t:'crypto', v:'ada'},
+    US30:{t:'flag', v:'us'}, DJ30:{t:'flag', v:'us'}, US100:{t:'flag', v:'us'},
+    NAS100:{t:'flag', v:'us'}, USTEC:{t:'flag', v:'us'}, US500:{t:'flag', v:'us'},
+    SPX500:{t:'flag', v:'us'}, UK100:{t:'flag', v:'gb'}, GER40:{t:'flag', v:'de'},
+    GER30:{t:'flag', v:'de'}, GERMANY40:{t:'flag', v:'de'}, FRA40:{t:'flag', v:'fr'},
+    JPN225:{t:'flag', v:'jp'}, JP225:{t:'flag', v:'jp'}, AUS200:{t:'flag', v:'au'},
+    HK50:{t:'flag', v:'hk'}, CHINA50:{t:'flag', v:'cn'}, EU50:{t:'flag', v:'eu'}
+  };
+  const MB_FB_COLORS = ['#c9a84c','#4ecb71','#e05252','#5b8def','#c56be0','#e0a052'];
+
+  function mbFlagUrl(code){
+    return `https://cdn.jsdelivr.net/gh/HatScripts/circle-flags/flags/${code}.svg`;
+  }
+  function mbCryptoUrl(code){
+    return `https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons/svg/color/${code}.svg`;
+  }
+  function mbFbColor(name){
+    let h = 0;
+    for(let i=0;i<name.length;i++) h = (h*31 + name.charCodeAt(i)) % 997;
+    return MB_FB_COLORS[h % MB_FB_COLORS.length];
+  }
+  function mbFallbackIconHtml(name){
+    const letters = mbEscapeHtml(name.slice(0,2));
+    return `<span class="mb-icon-fb" style="background:${mbFbColor(name)}">${letters}</span>`;
+  }
+  window.mbIconErr = function(imgEl, name){
+    imgEl.outerHTML = mbFallbackIconHtml(name);
+  };
+
+  function mbAssetIconHtml(rawName){
+    const name = (rawName || '').trim().toUpperCase();
+    if(!name) return mbFallbackIconHtml('?');
+
+    const ov = MB_SYMBOL_OVERRIDE[name];
+    if(ov){
+      if(ov.t === 'flag'){
+        return `<span class="mb-icon"><img src="${mbFlagUrl(ov.v)}" alt="" onerror="mbIconErr(this,'${name}')"></span>`;
+      }
+      if(ov.t === 'crypto'){
+        return `<span class="mb-icon"><img src="${mbCryptoUrl(ov.v)}" alt="" onerror="mbIconErr(this,'${name}')"></span>`;
+      }
+      if(ov.t === 'emoji'){
+        return `<span class="mb-icon-emoji" style="background:${ov.bg}">${ov.v}</span>`;
+      }
+    }
+
+    // 6-letter forex pair, e.g. EURUSD -> EUR + USD flags overlapping
+    if(name.length === 6){
+      const c1 = MB_CCY_FLAG[name.slice(0,3)];
+      const c2 = MB_CCY_FLAG[name.slice(3,6)];
+      if(c1 && c2){
+        return `<span class="mb-icon mb-icon-pair">` +
+          `<img src="${mbFlagUrl(c1)}" alt="" onerror="this.style.opacity='0'">` +
+          `<img src="${mbFlagUrl(c2)}" alt="" onerror="this.style.opacity='0'">` +
+          `</span>`;
+      }
+    }
+    // single currency code
+    if(MB_CCY_FLAG[name]){
+      return `<span class="mb-icon"><img src="${mbFlagUrl(MB_CCY_FLAG[name])}" alt="" onerror="mbIconErr(this,'${name}')"></span>`;
+    }
+
+    return mbFallbackIconHtml(name);
+  }
+
   function mbBiasMeta(b){
     if(b==='up') return {label:'Bullish', cls:'up', arrow:'▲'};
     if(b==='down') return {label:'Bearish', cls:'down', arrow:'▼'};
@@ -683,7 +825,7 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
       cards.push(`
         <div class="mb-card" data-asset="${mbEscapeHtml(asset)}">
           <button class="mb-card-del" data-del-asset="${mbEscapeHtml(asset)}" title="Delete asset">&times;</button>
-          <div class="mb-asset-name">${asset}</div>
+          <div class="mb-asset-name">${mbAssetIconHtml(asset)}<span>${asset}</span></div>
           ${inner}
         </div>
       `);
@@ -709,7 +851,7 @@ body{font-family:'Crimson Pro',serif;color:var(--text);padding:24px 14px 60px;}
     mbEditingId = null;
     document.getElementById('dashboard-view').style.display = 'none';
     document.getElementById('detail-view').style.display = 'block';
-    document.getElementById('mb-detail-asset-name').textContent = asset;
+    document.getElementById('mb-detail-asset-name').innerHTML = mbAssetIconHtml(asset) + `<span>${mbEscapeHtml(asset)}</span>`;
     mbUpdateBiasChoiceStyles();
     mbCloseEntryForm();
     mbRenderHistory();
